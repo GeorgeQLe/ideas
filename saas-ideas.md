@@ -574,3 +574,54 @@
 | 18 | MeetingTLDR | Productivity | Free / $18/mo | Remote workers |
 | 19 | WaitlistIQ | Launch | Free / $19/mo | Indie hackers |
 | 20 | DocuMerge | DevTools | Free / $29/mo | API companies |
+
+---
+
+## Desktop App Framework Comparison
+
+Each product above has a detailed desktop app spec comparing 5 frameworks. See [`specs/desktop/framework-guide.md`](specs/desktop/framework-guide.md) for the master framework comparison.
+
+| # | Product | Recommended | Runner-up | Key Desktop Rationale |
+|---|---------|------------|-----------|----------------------|
+| 01 | DriftLog | Tauri | Swift | Direct git access, tiny bundle for devs |
+| 02 | PulseBoard | Tauri | Electron | Real-time dashboard, system tray alerts |
+| 03 | SnipVault | Tauri | Swift | Global hotkey, clipboard monitoring, lightweight |
+| 04 | FormForge | Electron | Tauri | Rich form builder UI, drag-and-drop |
+| 05 | StatusPing | Tauri | Swift | Lightweight tray app, background monitoring |
+| 06 | InvoiceGhost | Electron | Tauri | Rich document/email UI, PDF generation |
+| 07 | FeedLoop | Tauri | Electron | Background aggregator, low resource footprint |
+| 08 | ShipFlag | Tauri | Swift | Dev tool, tiny bundle, local flag server |
+| 09 | OnboardFlow | Electron | Tauri | Rich dashboard, document handling |
+| 10 | ReviewRadar | Tauri | Swift | Lightweight monitoring, tray alerts |
+| 11 | DataPipe | Tauri | Electron | Local data processing, visual pipeline builder |
+| 12 | LinkShelf | Tauri | Swift | Browser companion, global hotkey utility |
+| 13 | ScheduleKit | Swift | Tauri | Native calendar integration (EventKit) |
+| 14 | PriceWise | Electron | Tauri | Rich data visualization, charts |
+| 15 | ContentCal | Electron | Tauri | Media library, calendar drag-and-drop |
+| 16 | PermitFlow | Tauri | Swift | Security tool, permission graph visualization |
+| 17 | BugBounce | Tauri | Electron | Screenshot capture, annotation tools |
+| 18 | MeetingTLDR | Swift | Tauri | Best audio APIs, on-device Whisper |
+| 19 | WaitlistIQ | Tauri | Swift | Lightweight dashboard, CSV processing |
+| 20 | DocuMerge | Tauri | Electron | Local code scanning, tree-sitter parsing |
+| 21 | CircuitMind | Tauri | Swift | GPU PCB rendering, SPICE simulation |
+| 22 | FoldSight | Tauri | Swift | GPU molecular viz, local AlphaFold |
+| 23 | NeuralForge | Electron | Tauri | React Flow visual builder, training UI |
+| 24 | ChipFlow | Tauri | Swift | GPU layout rendering, EDA compute |
+| 25 | MatDiscover | Tauri | Swift | GPU DFT calculations, crystal viz |
+| 26 | GeneWeave | Tauri | Electron | Rust bioinformatics, HIPAA compliance |
+| 27 | RoboSim | Tauri | Swift | GPU physics, serial robot connection |
+| 28 | QubitStudio | Tauri | Electron | Quantum circuit simulation, GPU state vectors |
+| 29 | MolForge | Tauri | Swift | GPU molecular dynamics, 3D viz |
+| 30 | FlowCFD | Tauri | Swift | GPU Navier-Stokes solver, flow viz |
+| 31 | SpectrumLab | Tauri | Swift | Real-time DSP, hardware interfaces |
+| 32 | PrintGen | Tauri | Swift | GPU topology optimization, 3D mesh |
+| 33 | TerraScan | Tauri | Electron | GPU raster processing, satellite imagery |
+| 34 | VoltVault | Tauri | Swift | GPU electrochemical sim, thermal modeling |
+| 35 | SynthBio | Tauri | Swift | Genetic circuit simulation, SBOL viz |
+| 36 | PhotonPath | Tauri | Swift | GPU FDTD simulation, photonic layout |
+| 37 | ClimaCast | Tauri | Swift | GPU weather simulation, terrain viz |
+| 38 | StructAI | Tauri | Swift | GPU FEA solver, structural viz |
+| 39 | ReactorSim | Tauri | Swift | GPU neutron transport, air-gapped deploy |
+| 40 | DriveSim | Tauri | Swift | GPU sensor sim, autonomous driving |
+
+**Summary:** Tauri recommended for 33/40 products (82%), Electron for 5/40 (13%), Swift for 2/40 (5%). Tauri dominates due to tiny bundle sizes, low memory footprint, and Rust backend synergy with compute-heavy workloads. Electron wins where rich web UI libraries (React Flow, FullCalendar, Konva.js) provide significant development speed advantages. Swift wins for macOS-only products requiring deep OS integration (calendar, audio).
