@@ -41,24 +41,24 @@ Each product has a summary in [`saas-ideas.md`](saas-ideas.md), a detailed web a
 |---|---------|-------------|------|---------|
 | 21 | CircuitMind | AI-Assisted PCB Design | [spec](specs/21-circuitmind.md) | [desktop](specs/desktop/21-circuitmind.md) |
 | 22 | FoldSight | Protein Structure Prediction | [spec](specs/22-foldsight.md) | [desktop](specs/desktop/22-foldsight.md) |
-| 23 | NeuralForge | Visual Neural Network Builder | -- | [desktop](specs/desktop/23-neuralforge.md) |
-| 24 | ChipFlow | IC/ASIC Layout Design | -- | [desktop](specs/desktop/24-chipflow.md) |
+| 23 | NeuralForge | Visual Neural Network Builder | [spec](specs/23-neuralforge.md) | [desktop](specs/desktop/23-neuralforge.md) |
+| 24 | ChipFlow | IC/ASIC Layout Design | [spec](specs/24-chipflow.md) | [desktop](specs/desktop/24-chipflow.md) |
 | 25 | MatDiscover | Materials Discovery Platform | [spec](specs/25-matdiscover.md) | [desktop](specs/desktop/25-matdiscover.md) |
 | 26 | GeneWeave | Genomics Analysis Pipeline | [spec](specs/26-geneweave.md) | [desktop](specs/desktop/26-geneweave.md) |
-| 27 | RoboSim | Robotics Simulation | -- | [desktop](specs/desktop/27-robosim.md) |
-| 28 | QubitStudio | Quantum Computing IDE | -- | [desktop](specs/desktop/28-qubitstudio.md) |
+| 27 | RoboSim | Robotics Simulation | [spec](specs/27-robosim.md) | [desktop](specs/desktop/27-robosim.md) |
+| 28 | QubitStudio | Quantum Computing IDE | [spec](specs/28-qubitstudio.md) | [desktop](specs/desktop/28-qubitstudio.md) |
 | 29 | MolForge | Molecular Dynamics Simulator | [spec](specs/29-molforge.md) | [desktop](specs/desktop/29-molforge.md) |
 | 30 | FlowCFD | Computational Fluid Dynamics | [spec](specs/30-flowcfd.md) | [desktop](specs/desktop/30-flowcfd.md) |
-| 31 | SpectrumLab | Signal Processing Toolkit | -- | [desktop](specs/desktop/31-spectrumlab.md) |
-| 32 | PrintGen | 3D Print Optimization | -- | [desktop](specs/desktop/32-printgen.md) |
+| 31 | SpectrumLab | Signal Processing Toolkit | [spec](specs/31-spectrumlab.md) | [desktop](specs/desktop/31-spectrumlab.md) |
+| 32 | PrintGen | 3D Print Optimization | [spec](specs/32-printgen.md) | [desktop](specs/desktop/32-printgen.md) |
 | 33 | TerraScan | Remote Sensing & GIS | [spec](specs/33-terrascan.md) | [desktop](specs/desktop/33-terrascan.md) |
-| 34 | VoltVault | Battery & Electrochemistry Simulation | -- | [desktop](specs/desktop/34-voltvault.md) |
-| 35 | SynthBio | Synthetic Biology Design | -- | [desktop](specs/desktop/35-synthbio.md) |
-| 36 | PhotonPath | Photonics Simulation | -- | [desktop](specs/desktop/36-photonpath.md) |
+| 34 | VoltVault | Battery & Electrochemistry Simulation | [spec](specs/34-voltvault.md) | [desktop](specs/desktop/34-voltvault.md) |
+| 35 | SynthBio | Synthetic Biology Design | [spec](specs/35-synthbio.md) | [desktop](specs/desktop/35-synthbio.md) |
+| 36 | PhotonPath | Photonics Simulation | [spec](specs/36-photonpath.md) | [desktop](specs/desktop/36-photonpath.md) |
 | 37 | ClimaCast | Weather & Climate Modeling | [spec](specs/37-climacast.md) | [desktop](specs/desktop/37-climacast.md) |
-| 38 | StructAI | Structural Engineering AI | -- | [desktop](specs/desktop/38-structai.md) |
-| 39 | ReactorSim | Nuclear Reactor Simulation | -- | [desktop](specs/desktop/39-reactorsim.md) |
-| 40 | DriveSim | Autonomous Driving Simulation | -- | [desktop](specs/desktop/40-drivesim.md) |
+| 38 | StructAI | Structural Engineering AI | [spec](specs/38-structai.md) | [desktop](specs/desktop/38-structai.md) |
+| 39 | ReactorSim | Nuclear Reactor Simulation | [spec](specs/39-reactorsim.md) | [desktop](specs/desktop/39-reactorsim.md) |
+| 40 | DriveSim | Autonomous Driving Simulation | [spec](specs/40-drivesim.md) | [desktop](specs/desktop/40-drivesim.md) |
 
 ---
 
