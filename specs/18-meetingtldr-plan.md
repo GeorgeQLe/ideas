@@ -1723,11 +1723,18 @@ npm install googleapis
     5. Update meeting status to "ready"
   - Retry logic: 3 attempts with exponential backoff
 
-**Day 19 — Summarization engine**
+**Day 19 — Summarization engine + topic segmentation**
 - Create `src/server/ai/summarize-meeting.ts`:
   - `generateSummary(fullText, meetingType)`: GPT-4o structured JSON output
   - Template additions per meeting type (standup, planning, 1on1, client, allhands)
   - Extract: TL;DR, decisions, discussion topics, open questions, action items, sentiment
+- Create `src/server/ai/topic-segmentation.ts`:
+  - Pre-processing step before summarization: split transcript into coherent topic segments
+  - Algorithm: sliding window (5-minute chunks) with embedding similarity between adjacent windows
+  - Topic boundary detection: when cosine similarity between adjacent windows drops below 0.7 threshold, mark as topic boundary
+  - Each segment gets a topic label via GPT-4o-mini (single-sentence classification, temperature 0.2)
+  - Segments stored in `summaries.discussionTopics` with accurate `startMs`/`endMs` timestamps
+  - Enables "jump to topic" navigation in the transcript viewer
 
 **Day 20 — Action item extraction + date parsing**
 - Create `src/server/lib/date-parser.ts`:
@@ -1825,7 +1832,9 @@ npm install googleapis
 
 ---
 
-### Phase 6: Action Items + Analytics (Days 30–33)
+### Phase 6: Action Items + Analytics + Glossary Wiring (Days 30–35)
+
+> **Note:** This phase was extended by 2 days (originally Days 30-33, now Days 30-35) to accommodate the complexity of cross-meeting action item tracking, analytics query optimization, and glossary integration wiring into both Deepgram and GPT-4o pipelines.
 
 **Day 30 — Action item tracker**
 - Create `src/server/trpc/routers/actionItem.ts`:
@@ -1875,7 +1884,7 @@ npm install googleapis
 
 ---
 
-### Phase 7: Billing + Settings (Days 34–37)
+### Phase 7: Billing + Settings (Days 36–39)
 
 **Day 34 — Stripe integration**
 ```bash
@@ -1913,18 +1922,29 @@ npm install stripe
   - Timezone
   - Glossary management (add/edit/delete terms)
 
-**Day 37 — Glossary management**
+**Day 37 — Glossary management + integration wiring**
 - Create `src/server/trpc/routers/glossary.ts`:
   - `list`, `create`, `update`, `delete`
 - Create glossary section on settings page:
   - Add term: term + pronunciation hint + description
   - Edit/delete existing terms
-  - Pass glossary to Deepgram as custom vocabulary hints
-  - Pass glossary to GPT-4o in summarization prompt
+- **Deepgram vocabulary wiring** (`src/server/services/meeting-bot.ts`):
+  - On bot dispatch, fetch org glossary terms and pass as Deepgram `keywords` parameter
+  - Map glossary entries to Deepgram format: `{ "keywords": [{ "word": term, "boost": 5 }] }` for each glossary term
+  - Include `pronunciationHint` as Deepgram `search` terms for phonetic matching
+  - Rebuild keywords list on glossary update (cached in Redis, TTL 1 hour)
+- **GPT-4o summarization wiring** (`src/server/ai/summarize-meeting.ts`):
+  - Prepend glossary context block to the system prompt:
+    ```
+    COMPANY GLOSSARY (use these exact terms in your summary):
+    - {term}: {description}
+    ```
+  - Glossary terms injected into action item extraction to improve assignee name matching
+  - Glossary terms used as seed vocabulary for topic segmentation labels
 
 ---
 
-### Phase 8: Polish + Launch (Days 38–42)
+### Phase 8: Polish + Launch (Days 40–44)
 
 **Day 38 — Onboarding flow**
 - Create `src/app/onboarding/page.tsx`:
@@ -2224,3 +2244,18 @@ WHERE org_id = 'ORG_ID'
 | Summary page load | < 300ms | Single join query |
 | Email sharing | < 3s | Resend API |
 | Slack sharing | < 2s | Slack Web API |
+
+---
+
+## Post-MVP Roadmap
+
+| ID | Feature | Description | Priority |
+|----|---------|-------------|----------|
+| F5 | Topic Segmentation | Pre-summarization step that segments transcripts into coherent topics using embedding similarity on sliding windows. Enables "jump to topic" navigation and per-topic summaries. Algorithm already designed in Phase 4. | High |
+| F6 | Multi-Language Transcription | Support for non-English meetings via Deepgram's multilingual models. Language auto-detection, mixed-language meeting handling, and translated summaries via GPT-4o. | High |
+| F7 | Speaker Coaching Analytics | Per-person analytics: talk-to-listen ratio, interruption frequency, question-asking rate, filler word detection. Private coaching dashboard with trend tracking across meetings. | Medium |
+| F8 | Meeting Templates | Customizable summary templates beyond the built-in types. Template editor with configurable extraction rules (e.g., "extract all budget mentions", "list all technical decisions"). Share templates across org. | Medium |
+| F9 | CRM / Salesforce Integration | Auto-log meeting summaries and action items to Salesforce opportunity records. Match meeting participants to CRM contacts. Auto-create follow-up tasks in Salesforce. | Medium |
+| F10 | Zoom + Microsoft Teams Support | Expand beyond Google Meet to Zoom (via Zoom SDK bot) and Microsoft Teams (via Graph API bot). Unified meeting archive across all platforms. | High |
+| F11 | Weekly Digest Email | Automated weekly summary email: meetings attended, total action items created/completed, key decisions across all meetings, upcoming meetings with auto-join status. | Low |
+| F12 | Notion / Confluence Export | One-click export of meeting summaries to Notion pages or Confluence spaces. Auto-create structured pages with linked action items. Template mapping per workspace. | Low |

@@ -18,6 +18,7 @@
 | Billing | Stripe | Checkout Sessions + Customer Portal + Webhooks |
 | AI — Content | OpenAI GPT-4o | Temperature 0.8 for creative social media copy |
 | AI — Hashtags | OpenAI GPT-4o-mini | JSON mode for hashtag suggestions |
+> **Note:** Image generation (DALL-E 3) deferred to post-MVP — MVP focuses on text content only.
 | Queue | BullMQ + Redis (Upstash) | Scheduled post publishing + content generation |
 | Social — Twitter | Twitter API v2 (OAuth 2.0 PKCE) | Post tweets, threads (v2 only) |
 | Social — LinkedIn | LinkedIn Marketing API (OAuth 2.0) | Share posts, articles |
@@ -2305,3 +2306,17 @@ ORDER BY created_at DESC;
 | Token refresh | < 2s | Platform OAuth refresh endpoint |
 | Publishing queue check (100 scheduled) | < 300ms | BullMQ getDelayed() |
 | Onboarding wizard load | < 400ms | Minimal queries per step |
+| Calendar rendering (1000+ posts) | < 1s | Virtual scrolling for list view, lazy-loading for month view cells |
+| Month view with 60+ posts | < 500ms | Only render visible day cells, overflow indicator for 3+ posts per day |
+
+---
+
+## Post-MVP Roadmap
+
+| Feature | Priority | Description |
+|---------|----------|-------------|
+| **F5 — Instagram / Facebook / TikTok Publishing** | High | Add OAuth flows + adapter for Meta Graph API (Instagram, Facebook) and TikTok Content Posting API. Requires media upload pipeline since these platforms are image/video-first. |
+| **F6 — Content Recycling Engine** | Medium | AI identifies top-performing posts (by engagement rate) and suggests repurposed versions — e.g., turn a high-engagement tweet into a LinkedIn carousel or refresh copy with updated stats. |
+| **F7 — Advanced Analytics with Engagement Predictions** | Medium | Pull engagement metrics from Twitter/LinkedIn APIs on a schedule, build per-brand engagement models, and predict best posting times + content types. Requires historical data (8+ weeks). |
+| **F8 — Client / Workspace Management for Agencies** | High | Multi-workspace support: agency users manage multiple client brands from a single login. Per-client billing, white-label reports, client approval workflows. |
+| **F9 — Carousel / Thread Builder** | Medium | Visual builder for multi-image Instagram carousels, Twitter/X thread composer with per-tweet editing, and LinkedIn document (PDF carousel) posts. Requires media upload + ordering UI. |

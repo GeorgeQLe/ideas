@@ -1136,6 +1136,14 @@ npm i @readme/openapi-parser js-yaml handlebars
 - Handle auth headers, path params, query params, request body
 - Generate example values from schemas
 
+> **Code Example Language Roadmap**
+>
+> *MVP (3 languages)*: cURL, JavaScript (fetch), Python (requests) — shipped Day 6 with Handlebars templates.
+>
+> *v2 expansion (6+ languages)*: Go (net/http), Ruby (net/http), PHP (cURL), Java (HttpClient), C# (HttpClient), Rust (reqwest). Each language template follows a standard interface: `{ auth, pathParams, queryParams, requestBody, responseHandling, errorHandling }`. Templates stored in `src/server/templates/code/{lang}.hbs`, loaded dynamically at parse time. New languages require only: (1) a `.hbs` template file and (2) a language config entry in `src/server/services/code-examples.ts` specifying syntax highlighting grammar and display name.
+>
+> *Community contribution framework*: Public GitHub repo `documerge/code-templates` with CI validation — each PR runs the template against 10 reference OpenAPI snippets (covering auth types, file uploads, pagination, nested bodies) and diffs output against golden files. Merged templates auto-deploy to production within 30 minutes via GitHub Actions webhook. Contributors recognized on docs site language selector with "Community" badge.
+
 **Day 7: Spec import — file upload**
 - `src/server/routers/project.ts` — create project, import spec (file upload)
 - `src/app/(dashboard)/projects/new/page.tsx` — create project wizard
@@ -1215,6 +1223,12 @@ npm i @readme/openapi-parser js-yaml handlebars
 - `src/app/api/public/playground/proxy/route.ts` — CORS proxy endpoint
 - `src/components/playground/ResponseViewer.tsx` — status code badge, timing, formatted JSON body (syntax highlighted), response headers table
 - Error handling: timeout, connection refused, invalid JSON
+- **Multipart/file-upload support**: When endpoint `requestBody` contains `multipart/form-data` content type:
+  - `src/components/playground/FileUploadField.tsx` — drag-and-drop file input rendered for `type: string, format: binary` schema fields
+  - Body editor switches from JSON textarea to form-field mode with individual inputs per form part
+  - CORS proxy accepts `FormData` via `req.formData()` and forwards as `multipart/form-data` to target API (preserves original field names, filenames, content types)
+  - Max file size: 10MB per file, 25MB total per request (validated client-side and server-side)
+  - Supported detection: auto-detect from `requestBody.content['multipart/form-data']` in endpoint spec, show file input for `format: binary` fields and text inputs for other fields
 
 **Day 21: Playground — cURL generation**
 - `src/components/playground/CurlGenerator.tsx` — generate cURL command from current request state
@@ -1263,6 +1277,9 @@ npm i @readme/openapi-parser js-yaml handlebars
 - `src/app/(dashboard)/projects/[slug]/settings/branding/page.tsx` — logo upload, color pickers, font selector
 - `src/components/settings/BrandingPreview.tsx` — live preview of docs site with branding
 - R2 upload for logos and favicons
+- **Free tier**: Primary color + accent color only, DocuMerge branding badge visible in footer
+- **Pro tier ($29/mo)**: Logo upload, full color palette (primary, accent, background, text), font selector from 12 curated Google Fonts, remove DocuMerge branding badge
+- **Enterprise tier ($99/mo)**: All Pro features + custom CSS editor (`<style>` injection scoped to `.documerge-docs` container, max 10KB, sanitized with DOMPurify to strip `position:fixed`, `z-index>1000`, external `url()` references), custom header/footer HTML (sanitized, max 5KB each)
 
 **Day 29: Stripe integration**
 - `src/server/services/stripe.ts`, `src/server/routers/billing.ts`
@@ -1309,6 +1326,13 @@ npm i @readme/openapi-parser js-yaml handlebars
 - `src/app/(docs)/[projectSlug]/errors/page.tsx` — auto-generated error reference from response schemas
 - `src/app/(docs)/[projectSlug]/schemas/page.tsx` — schema browser with interactive JSON viewer
 - `src/app/(docs)/[projectSlug]/schemas/[name]/page.tsx` — individual schema detail
+- `src/components/docs/InteractiveSchemaExplorer.tsx` — interactive schema browser component:
+  - **Tree view**: Expandable/collapsible property tree with type badges (`string`, `integer`, `array`, `object`, `enum`), required field indicators (red asterisk), and deprecation strikethrough
+  - **Example generation**: "Generate Example" button produces a valid JSON instance from the schema (respects `example`, `default`, `enum`, `format` fields; recursion depth capped at 5 levels)
+  - **Copy as TypeScript**: One-click conversion of JSON Schema to TypeScript interface (handles `allOf`/`oneOf`/`anyOf` as intersection/union types, `$ref` resolved to interface name)
+  - **Relationship graph**: Minimap showing schema references — clickable nodes linking to referenced schemas (rendered with `reactflow` in a 300px collapsible panel)
+  - **Search within schema**: Filter properties by name with instant highlight (debounced 150ms, matches across nested depths)
+  - **"Used by" section**: List of endpoints that reference this schema in request body or response (linked to endpoint page)
 
 **Day 37: Polish and edge cases**
 - Large spec handling (1000+ endpoints): pagination, lazy-load sidebar groups
@@ -1316,6 +1340,16 @@ npm i @readme/openapi-parser js-yaml handlebars
 - Playground rate limiting
 - Mobile docs layout optimization
 - Print-friendly CSS
+
+> **Large Spec Handling Test** (1000+ endpoints)
+>
+> Generate a synthetic OpenAPI 3.1 spec with 1,200 endpoints across 40 tags, 300 component schemas with cross-references, and 150 security-scoped paths. Test targets:
+> - **Full render (docs site homepage + sidebar)**: <3s initial load — sidebar uses virtual scrolling (`@tanstack/react-virtual`, 50px row height, 500px visible window) rendering only visible tag groups; endpoint list within each group lazy-loads on expand
+> - **Endpoint page render**: <500ms — individual endpoint page with 15+ parameters and nested request/response schemas
+> - **Search across all endpoints**: <500ms for query-to-results — Pagefind index pre-built at parse time, client-side filtering with debounced 200ms input
+> - **Sidebar scroll performance**: 60fps during fast scroll — virtual scrolling ensures <50 DOM nodes rendered at any time regardless of total endpoint count
+> - **Spec re-parse on GitHub sync**: <30s for 1,200 endpoints — batch INSERT (100 endpoints/batch) with transaction, code examples generated in parallel via `Promise.allSettled` (concurrency: 10)
+> - **Schema browser load**: <1s for 300 schemas — paginated list (50/page), individual schema detail pages use the same `InteractiveSchemaExplorer` component with recursion depth cap
 
 **Day 38: Launch preparation**
 - End-to-end: upload spec → docs generated → playground works → GitHub sync updates
@@ -1509,3 +1543,25 @@ JOIN api_versions av ON av.id = e.version_id AND av.is_latest = true;
 | Search (Pagefind) | <100ms | Client-side static index |
 | GitHub sync (spec update) | <10s | Fetch + parse + revalidate |
 | Code example generation | <1s | Handlebars template per endpoint |
+| Large spec render (1200 endpoints) | <3s | Virtual scrolling sidebar, lazy-load groups |
+| Large spec search (1200 endpoints) | <500ms | Pre-built Pagefind index, client-side |
+| Large spec re-parse (1200 endpoints) | <30s | Batch INSERT (100/batch), parallel code gen |
+| Schema browser (300 schemas) | <1s | Paginated list, 50/page |
+
+---
+
+## Post-MVP Roadmap
+
+| # | Feature | Description | Est. Effort |
+|---|---------|-------------|-------------|
+| F5 | GraphQL Spec Support | Import GraphQL SDL / introspection, generate query explorer + schema docs | 2 weeks |
+| F6 | Versioned Docs Diff | Side-by-side changelog between API versions highlighting added/removed/changed endpoints | 1 week |
+| F7 | Team Collaboration | Comments on endpoints, suggested edits, review workflows (Enterprise) | 2 weeks |
+| F8 | Webhook Documentation | Dedicated webhook section with payload schemas, delivery logs, test sender | 1 week |
+| F9 | AI Quickstart Guide | GPT-4o generates a "Getting Started" tutorial from the spec (auth setup, first request, pagination) | 3 days |
+| F10 | Interactive Schema Explorer | Full schema browser with relationship graph, TypeScript export, example generation (see Day 36 spec) | 1 week |
+| F11 | Additional Code Languages (v2) | Go, Ruby, PHP, Java, C#, Rust templates + community contribution framework | 2 weeks |
+| F12 | SDK Generation | Auto-generate typed SDK packages (TypeScript, Python) from OpenAPI spec, publish to npm/PyPI | 3 weeks |
+| F13 | Custom Domain SSL | Automated SSL provisioning via Let's Encrypt for custom domains (currently relies on Vercel proxy) | 1 week |
+| F14 | API Changelog Feed | RSS/Atom feed + email digest of spec changes, subscriber management | 1 week |
+| F15 | Embed Widgets | Embeddable endpoint documentation widgets (`<iframe>` or web components) for external sites | 1 week |

@@ -1477,6 +1477,7 @@ npm i bullmq openai
 **Day 13: Hybrid search implementation**
 - `src/server/services/search.ts` — semantic search (pgvector), text search (pg_trgm), RRF merge
 - `src/server/routers/search.ts` — search endpoint with filters (language, tags, collection)
+- `src/server/routers/search.ts` — add autocomplete endpoint: `GET /api/snippets/autocomplete?q=` — returns top 8 snippet title + tag matches using pg_trgm prefix matching with `word_similarity()` for fast keystroke-level suggestions (target <50ms). Response: `{ suggestions: [{ type: "snippet" | "tag", id, label, sublabel? }] }`
 - `src/app/(dashboard)/search/page.tsx` — search results with relevance highlighting
 
 **Day 14: Search UI and refinements**
@@ -1799,3 +1800,22 @@ GROUP BY source, status;
 | VS Code save command | <1s | API call + confirmation |
 | VS Code search command | <1.5s | Search + QuickPick display |
 | Gist import (100 gists) | <60s | Fetch + create + enqueue AI |
+
+---
+
+## Post-MVP Roadmap
+
+| Feature | Description | Priority |
+|---------|-------------|----------|
+| JetBrains Plugin | IntelliJ/WebStorm plugin for save, search, and insert from the IDE using the same device code auth flow as VS Code | High |
+| Neovim/Telescope Integration | Telescope picker extension for Neovim with fuzzy search, preview, and yank-to-buffer | Medium |
+| Browser Extension | Chrome/Firefox extension to save code blocks from Stack Overflow, GitHub, and MDN with one click, auto-detecting language and source URL | Medium |
+| Slack Bot | `/snip` slash command to search and share snippets directly in Slack channels and DMs | Low |
+
+### Import Sources Roadmap
+
+| Source | Format | Strategy |
+|--------|--------|----------|
+| VS Code Snippets | `.code-snippets` JSON files | Parse VS Code snippet format, map `prefix`/`body`/`scope` to SnipVault title/content/language, import as a new collection |
+| Notion | Notion API export | Fetch code blocks from specified Notion pages via API, preserve page title as snippet title and surrounding text as description |
+| Markdown Files | `.md` files with fenced code blocks | Parse fenced code blocks (``` ```), extract language hints, create one snippet per block with the markdown heading as context |

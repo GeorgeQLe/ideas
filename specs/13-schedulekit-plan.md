@@ -1924,3 +1924,36 @@ JOIN bookings b2 ON b1.assigned_member_id = b2.assigned_member_id
 | Dashboard page load | <1.5s | Full page with booking list |
 | Embed code copy-paste test | 1 step | Script tag → widget visible in <3s |
 | Concurrent booking test | 0 conflicts | 50 simultaneous bookings to same slot, exactly 1 succeeds |
+
+---
+
+## Daily Meeting Limits (spec F4)
+
+The `meetingTypes` table includes a `dailyLimit` column (nullable integer) for configuring maximum meetings per day:
+
+- **Configurable max meetings per day**: Default is 8 meetings per day per member. Set to `null` for unlimited. Enforced during slot computation -- once the daily limit is reached for a member on a given date, remaining slots for that date are excluded from the availability response.
+- **Buffer time between meetings**: Configurable via `bufferBefore` and `bufferAfter` on each meeting type (default 15 minutes each). The availability engine subtracts buffer time from available windows, ensuring the host has breathing room between back-to-back meetings. For example, a 30-minute meeting with 15-minute buffers blocks a 60-minute window in the calendar.
+- **Lunch block auto-detection**: The availability engine detects lunch blocks by finding gaps in the weekly schedule configuration. If a member's schedule has a gap between 11:00-14:00 (e.g., available 09:00-12:00 and 13:00-17:00), the gap is automatically treated as a lunch block. No meetings are scheduled during this gap. Members can also explicitly mark lunch blocks via date overrides.
+
+---
+
+## Video Conferencing Link Generation
+
+When a booking is confirmed, the system automatically generates a video conferencing link based on the meeting type's `locationType`:
+
+- **Google Meet**: Uses the Google Calendar API v3. When creating the calendar event via `events.insert`, set `conferenceDataVersion: 1` and `conferenceData.createRequest.requestId` to a unique ID. Google automatically generates a Meet link and returns it in the event response. The link is stored in `bookings.meetingLink`. Requires the connected Google Calendar OAuth scope `https://www.googleapis.com/auth/calendar.events`.
+- **Zoom**: Requires a Zoom OAuth app with the `meeting:write` scope. On booking confirmation, call `POST /users/me/meetings` with the meeting details (topic, start time, duration). The response contains the `join_url` which is stored in `bookings.meetingLink`. Token refresh is handled via the same encrypted credential flow as Google Calendar.
+- **Custom link support**: For other platforms (Microsoft Teams, Webex, or any custom URL), the meeting type's `locationConfig.customUrl` is used directly as the meeting link. Template variables are supported: `{{booking_id}}`, `{{guest_name}}`, `{{start_time}}` are replaced before storing.
+
+---
+
+## Post-MVP Roadmap
+
+The following features extend ScheduleKit beyond the core MVP:
+
+- **RTL layout support**: Full right-to-left layout for the widget and dashboard to support Arabic, Hebrew, and other RTL languages. Requires CSS logical properties and mirrored component layouts.
+- **Custom CSS theming**: Beyond CSS variable theming, allow Pro/Business users to inject custom CSS into the widget Shadow DOM for pixel-perfect brand matching.
+- **15+ language translations (spec F2)**: Internationalize all widget strings, email templates, and hosted booking pages. Priority languages: Spanish, French, German, Portuguese, Japanese, Korean, Chinese (Simplified), Italian, Dutch, Polish, Turkish, Russian, Arabic, Hindi, Thai.
+- **Team scheduling modes -- round-robin and collective (spec F6)**: Round-robin assigns bookings to team members in rotation (weighted by the `meetingTypeMembers.weight` field). Collective mode requires all assigned members to be available simultaneously. Both modes extend the availability computation engine to query multiple members.
+- **Payment integration -- Stripe pre-payment (spec F7)**: Require guests to pay before confirming a booking. The `meetingTypes.priceCents` field drives a Stripe Checkout session inserted into the booking flow between form submission and confirmation. Supports refunds on cancellation within a configurable window.
+- **SMS notifications via Twilio (spec F8)**: Send booking confirmations and reminders via SMS in addition to email. Requires Twilio integration with the `guest_phone` field on bookings. SMS is opt-in per guest and configurable per meeting type.

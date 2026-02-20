@@ -303,12 +303,13 @@ Match the writing style of these example emails from the sender:
 - Create `src/server/trpc/routers/settings.ts`:
   - `settings.getProfile` — return user profile, tone, voice samples
   - `settings.updateProfile` — update businessName, tonePreference, emailFromName
-  - `settings.updateVoiceSamples` — validate max 3 samples, max 2000 chars each
+  - `settings.updateVoiceSamples` — validate max 3 samples, max 2000 chars each. **Voice/tone sample validation**: each sample must be a minimum of 500 characters to provide enough stylistic signal for the AI. On save, a quick GPT-4o-mini call computes a tone consistency score (0-1) comparing the sample against the user's selected `tonePreference`. If the score is < 0.7, the sample is accepted but a warning is shown ("Your sample doesn't closely match your selected tone — the AI will fall back to neutral tone for this sample"). At email generation time, samples with consistency score < 0.7 are excluded from the few-shot examples and the AI falls back to the selected tone preset without custom voice styling.
 - Create `src/server/trpc/routers/source.ts`:
   - `source.list` — list user's invoice sources
   - `source.connectStripe` — accept Stripe restricted API key, validate by calling `stripe.invoices.list({ limit: 1 })`, encrypt and store. Register a Stripe webhook endpoint pointing to our callback URL. Store webhook secret encrypted.
   - `source.disconnect` — delete webhook endpoint from Stripe, delete source + cascading invoices
   - `source.syncNow` — trigger manual sync (calls sync function directly)
+  - **Monthly credential re-validation**: a Vercel cron job (`/api/cron/validate-credentials`) runs on the 1st of each month. For each active `invoiceSource` with type `stripe`, it decrypts the stored API key, calls `stripe.invoices.list({ limit: 1 })`, and verifies the key is still valid. If the call fails with a 401 (invalid key) or 403 (insufficient permissions), the source status is set to `error` with `syncError = "Stripe API key is no longer valid — please reconnect"`, and an email notification is sent to the user prompting them to update their credentials. This prevents silent sync failures when users rotate their Stripe API keys.
 
 **Day 4 — Stripe Invoice Sync Engine**
 - Create `src/server/integrations/stripe-sync.ts`:
@@ -340,6 +341,7 @@ Match the writing style of these example emails from the sender:
   - `invoice.list` — paginated, filterable by status/client/date range, sortable by amount/dueDate/status. Include `nextReminderDate` computed from scheduledJobs.
   - `invoice.getById` — full invoice with client, sent reminders, scheduled jobs
   - `invoice.create` — manual entry: validate fields (invoiceNumber, amount, dueDate, clientEmail, clientName). Auto-create or match `clients` row by email. Source is the user's "manual" source (auto-created if not exists). Plan limit check: free tier max 5 invoices/month.
+  - **Free tier counting clarification**: the 5-invoice limit uses a **rolling calendar month window** aligned to **UTC day boundaries**. The counter counts invoices where `createdAt >= start of current UTC month`. The counter resets at `00:00:00 UTC` on the 1st of each month. There is no proration for mid-month signups (a user who signs up on the 28th still gets 5 invoices for that partial month). The count includes both Stripe-synced and manually created invoices. Deleted invoices are subtracted from the count. The enforcement query is: `SELECT COUNT(*) FROM invoices WHERE user_id = ? AND created_at >= date_trunc('month', now() AT TIME ZONE 'UTC')`.
   - `invoice.update` — edit amount, dueDate, description, status
   - `invoice.markAsPaid` — set status to `paid`, cancel pending jobs, update client aggregates
   - `invoice.writeOff` — set status to `written_off`, cancel pending jobs
@@ -580,7 +582,10 @@ Match the writing style of these example emails from the sender:
 - Timeline component adapts to horizontal scroll on mobile
 
 **Day 26 — Edge Cases + Error Handling**
-- Handle Stripe API rate limits with exponential backoff in sync
+- **Stripe API Rate Limit Handling** — all Stripe API calls go through a centralized `stripeRequest()` wrapper that implements:
+  - **Exponential backoff**: base delay 1s, multiplied by 2 on each 429 response, capped at 30s maximum delay, with random jitter (+/-500ms) to avoid synchronized retries across users
+  - **Queue-based webhook processing**: incoming Stripe webhooks are written to a lightweight in-memory queue (max 500 items) and processed sequentially with a 100ms delay between Stripe API calls to stay well under the 100 req/s limit; if the queue fills, new events are deferred to a QStash delayed message
+  - **Per-account rate tracking**: each `invoiceSource` tracks its last Stripe API call timestamp and remaining rate limit headers (`Stripe-RateLimit-Remaining`); sync operations voluntarily throttle to 25 req/s per account to leave headroom for webhook-triggered calls
 - Handle Resend sending failures with retry logic in job handler
 - Handle QStash callback failures (configure dead letter queue)
 - Handle Clerk webhook failures (idempotent user creation)

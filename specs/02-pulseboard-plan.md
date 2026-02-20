@@ -78,6 +78,15 @@ export const organizations = pgTable("organizations", {
     digestDay?: string; // "monday" | "friday"
     digestEnabled?: boolean;
   }>(),
+  // NOTE: Anonymous Mode Enforcement — when `anonymousMode` is enabled (at org
+  // or team level), individual check-in data (energy, mood tags, notes) MUST NOT
+  // be surfaced to managers until the team has a minimum of 4 active members.
+  // Below this threshold the data is only shown in aggregate to prevent
+  // de-anonymization. The `minTeamSizeForAnonymity` setting defaults to 4 and
+  // can be raised but never lowered below 4. All dashboard queries and tRPC
+  // resolvers that return member-level data must check
+  // `team.members.length >= minTeamSizeForAnonymity` before including individual
+  // rows; if the condition is not met, return team-level aggregates only.
   createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
   updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
 });
@@ -1810,6 +1819,12 @@ export async function getTeamHeatmapSQL(opts: {
   - `getMyHistory`: paginated personal check-in history (last 30/90 days)
   - `getTeamToday`: all check-ins for a team today (manager-only)
   - `getTeamRange`: check-ins for a team over date range (for heatmap + trends)
+  - **Pagination/filtering for all list endpoints** — every check-in query that returns multiple rows accepts the following optional params:
+    - `page` (integer, default 1) — page number
+    - `limit` (integer, default 20, max 100) — items per page
+    - `dateFrom` (ISO 8601 date string) — inclusive start date filter
+    - `dateTo` (ISO 8601 date string) — inclusive end date filter
+    - Responses include `{ data: [...], pagination: { page, limit, totalCount, totalPages } }`
 - Implement upsert logic using `onConflictDoUpdate` on the unique `(memberId, date)` constraint
 - Date computation: resolve "today" using the member's configured timezone
 
@@ -2656,3 +2671,13 @@ LIMIT 10;
 | Alert check (all org, 100 members) | < 3s | Batch queries + 3 alert type checks |
 | Stripe checkout redirect | < 1s | Stripe API session creation |
 | Daily reminder job (100 members) | < 30s | Batch query + parallel Slack DM sends |
+
+---
+
+## Post-MVP Roadmap
+
+| Feature | Description | Priority |
+|---------|-------------|----------|
+| Microsoft Teams Integration | Teams bot with adaptive cards for check-in modals, channel-level team summaries, and scheduled DM prompts mirroring the Slack integration | High |
+| Mobile App (React Native) | Native iOS/Android app for quick check-ins with push notification reminders, personal trend widgets, and offline support with sync-on-reconnect | Medium |
+| Sprint/Velocity Correlation | Jira/Linear integration to overlay sprint velocity data on team energy trends, enabling data-driven retrospective insights and workload-energy correlation analysis | Medium |

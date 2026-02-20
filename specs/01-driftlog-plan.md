@@ -1528,3 +1528,65 @@ GROUP BY o.name ORDER BY release_count DESC;
 | Dashboard page load | <1.5s | Server components + tRPC |
 | GitHub API calls per webhook | 2-3 | PR diff + files list |
 | Webhook processing (end-to-end) | <30s | Receive → process → entry created |
+
+---
+
+## Public API Endpoints
+
+### RSS Feed
+
+`GET /changelog/{orgSlug}/rss`
+
+Returns an RSS 2.0 XML feed of published releases for the given organization. Supports `If-Modified-Since` and `ETag` headers for cache efficiency. Each `<item>` includes the release title, publication date, and all changelog entries concatenated as the description. The feed is regenerated on ISR revalidation.
+
+### JSON Changelog API
+
+`GET /api/public/changelog/{orgSlug}`
+
+Returns a JSON representation of published changelog releases. Supports optional query parameters:
+
+| Parameter | Type | Default | Description |
+|-----------|------|---------|-------------|
+| `page` | integer | 1 | Page number |
+| `limit` | integer | 10 | Items per page (max 50) |
+| `category` | string | all | Filter by category (feature, bugfix, improvement, etc.) |
+| `since` | ISO 8601 date | none | Only return releases published after this date |
+
+Response format:
+
+```json
+{
+  "releases": [
+    {
+      "id": "uuid",
+      "version": "v2.1.0",
+      "title": "Release Title",
+      "publishedAt": "2026-02-01T00:00:00Z",
+      "entries": [
+        {
+          "category": "feature",
+          "title": "Entry Title",
+          "body": "Markdown description"
+        }
+      ]
+    }
+  ],
+  "pagination": {
+    "page": 1,
+    "limit": 10,
+    "totalPages": 5,
+    "totalCount": 48
+  }
+}
+```
+
+---
+
+## Post-MVP Roadmap
+
+| Feature | Description | Priority |
+|---------|-------------|----------|
+| GitLab Integration | Support GitLab webhooks and MR events as a changelog source, mirroring the GitHub App model | High |
+| Bitbucket Support | Bitbucket Cloud webhook integration for PR-based changelog generation | Medium |
+| Monorepo Per-Package Changelogs | Detect package boundaries in monorepos and generate separate changelogs per package using path-based filtering and scoped release management | High |
+| Multi-Language Support | AI changelog generation in non-English languages (French, German, Japanese, etc.) with language detection from repo settings and per-org language preferences | Medium |

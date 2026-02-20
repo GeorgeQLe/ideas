@@ -127,6 +127,12 @@ export const bugReports = pgTable(
     embedding: vector("embedding", { dimensions: 1536 }),
     firstResponseAt: timestamp("first_response_at", { withTimezone: true }),
     resolvedAt: timestamp("resolved_at", { withTimezone: true }),
+    slaTier: text("sla_tier").default("standard").notNull(),
+    // standard (72h response, 14d resolution) | priority (24h response, 7d resolution) |
+    // critical (4h response, 48h resolution)
+    slaResponseDueAt: timestamp("sla_response_due_at", { withTimezone: true }),
+    slaResolutionDueAt: timestamp("sla_resolution_due_at", { withTimezone: true }),
+    slaBreached: boolean("sla_breached").default(false).notNull(),
     createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
     updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
   },
@@ -1914,7 +1920,24 @@ GROUP BY status;
 | AI categorization (worker) | <3s | GPT-4o-mini classification |
 | Embedding generation (worker) | <1s | text-embedding-3-small |
 | Dedup query (pgvector HNSW) | <50ms | 10K bug reports, top-5 results |
+| Dedup check at scale (50K+ reports) | <200ms | HNSW index with ef_search=40, top-5 cosine similarity |
 | Full processing pipeline | <8s | Submit → AI categorize → embed → dedup → priority |
 | Bug inbox page load | <1s | 50 bugs per page with filters |
 | Bug detail page load | <800ms | Bug + 20 submissions + 50 comments |
 | Jira issue creation | <2s | API call including attachment upload |
+
+---
+
+## Post-MVP Roadmap
+
+| ID | Feature | Description | Priority |
+|----|---------|-------------|----------|
+| F1 | Session Replay (rrweb) | Integrate rrweb for DOM-level session recording attached to bug submissions. Replay user actions leading up to the bug in a visual player. Lazy-loaded recording (~50KB), 30-second buffer before submission. | High |
+| F2 | Bi-Directional Jira Sync | Two-way sync between BugBounce and Jira: status changes in Jira reflect in BugBounce and vice versa. Webhook-based real-time sync with conflict resolution (last-write-wins with audit trail). | High |
+| F3 | SLA Tracking & Alerts | SLA tier enforcement with automated alerts. Schema fields (`slaTier`, `slaResponseDueAt`, `slaResolutionDueAt`, `slaBreached`) already added. Configurable SLA tiers per priority: standard (72h/14d), priority (24h/7d), critical (4h/48h). Dashboard SLA compliance widget. | High |
+| F4 | Advanced Analytics Dashboard | Bug trend charts (volume over time, resolution time trends, category distribution), team performance metrics (avg response time per assignee), dedup effectiveness tracking, and SLA compliance rates. | Medium |
+| F5 | Public Bug Tracker | Customer-facing bug tracker portal showing acknowledged bugs, their status, and resolution timeline. Voters can upvote bugs to influence priority. Configurable visibility per bug. | Medium |
+| F6 | Additional Integrations | Linear (GraphQL API), GitHub Issues (REST + webhooks), and Asana (REST API) as alternative issue tracker integrations. Same field mapping UI pattern as Jira. Integration selector during setup. | Medium |
+| F7 | Reporter Communication | In-app messaging between team and bug reporters. Email thread integration — reply to reporter notification to add comment. Reporter portal for checking bug status without login. | Low |
+| F8 | User Impact Segments | Tag submissions with user segments (enterprise, free, trial) for prioritization. Auto-enrich from CRM data (HubSpot, Salesforce). Priority boost for high-value customer segments. | Low |
+| F9 | AI Root Cause Clustering | ML-based clustering of related bugs by stack trace and error pattern similarity. Auto-suggest root cause labels. "Related bugs" sidebar on bug detail page. | Low |

@@ -2260,3 +2260,65 @@ ORDER BY r.responded_at DESC;
 | Dashboard overview load | < 600ms | Parallel tRPC queries + SSR |
 | Pricing rule evaluation (all products) | < 10s | Single pass through products with rule matching |
 | Shopify price push-back (variant update) | < 2s | Single Shopify Admin API call |
+
+---
+
+## Explicit Connector Scope
+
+**MVP: Shopify-only** via Shopify Admin REST API + GraphQL Admin API.
+
+- Product catalog sync via `GET /admin/api/2024-10/products.json` (REST) and bulk queries via GraphQL for efficiency on large catalogs
+- Order history import via `GET /admin/api/2024-10/orders.json` (last 12 months)
+- Inventory levels via `GET /admin/api/2024-10/inventory_levels.json`
+- Real-time updates via Shopify webhooks: `products/update`, `orders/create`, `inventory_levels/update`
+- Price push-back via `PUT /admin/api/2024-10/variants/{id}.json` to update variant price after recommendation acceptance
+
+**Deferred to post-MVP:**
+- **WooCommerce**: REST API v3, similar product/order/inventory structure but different auth (consumer key/secret)
+- **BigCommerce**: REST API v3 + webhooks, catalog and order management APIs
+- **Magento**: REST API with OAuth 1.0a, product and sales order endpoints
+- **Custom API connectors**: User-configurable REST API connector with mapping templates for product schema normalization
+
+---
+
+## Price Elasticity Analysis (spec F3)
+
+Price elasticity is a core capability that powers accurate pricing recommendations:
+
+- **Demand curve modeling**: For each product, the system builds a demand curve by correlating historical price points (from `priceHistory`) with sales velocity (units sold per week from order data). The curve is modeled as a log-linear regression: `ln(quantity) = a + b * ln(price)`, where `b` is the elasticity coefficient.
+- **Price sensitivity scoring per product/segment**: Each product receives an elasticity score from -3.0 (highly elastic, demand drops sharply with price increase) to 0 (perfectly inelastic). Products are also scored at the category/segment level to provide baseline estimates for products with limited individual history.
+- **Elasticity coefficient calculation**: Requires a minimum of 3 distinct price points with at least 2 weeks of sales data at each point. For products below this threshold, category-level elasticity is used as a proxy. The coefficient is recalculated weekly as new order data arrives.
+- **Visualization of price-demand relationship**: The product detail page includes a demand curve chart (Recharts ScatterChart with regression line) showing historical price-quantity data points overlaid with the modeled demand curve. Users can hover over the curve to see estimated units at any price point.
+
+---
+
+## A/B Price Testing (spec F5)
+
+A/B price testing allows merchants to validate pricing changes with statistical rigor:
+
+- **Test creation flow**: From the product detail page, click "Start Price Test". Configure: control price (current), variant price (recommended or custom), traffic split (default 50/50), minimum duration (default 14 days), and success metric (revenue per visitor or conversion rate).
+- **Variant assignment (hash-based)**: Visitors are deterministically assigned to control or variant using a murmur3 hash of `productId + visitorId (Shopify customer ID or session cookie)`. This ensures consistent pricing per visitor across sessions. Assignment is recorded in a `priceTestAssignments` table.
+- **Statistical significance calculator (chi-squared)**: The system continuously computes the chi-squared test statistic comparing conversion rates between control and variant. Results are displayed as a live significance meter in the test dashboard, showing current p-value, confidence level, and estimated days to reach 95% significance.
+- **Minimum sample size recommendations**: Before starting a test, the system estimates the required sample size based on the expected effect size (derived from the price difference) and baseline conversion rate. Displayed as "Estimated time to significance: X days at your current traffic level."
+- **Auto-winner selection**: When the test reaches 95% statistical significance and the minimum duration has elapsed, the system automatically declares a winner and optionally applies the winning price (if `autoApplyRecommendations` is enabled in org settings). A notification is sent to the team with full results.
+
+---
+
+## Revenue Impact Simulator (spec F6)
+
+The revenue impact simulator helps merchants understand the financial consequences of pricing decisions:
+
+- **Phase 1 -- Basic Calculator (MVP)**: A simple calculator on the product detail page that takes a proposed price and displays: estimated revenue change (%), estimated margin change, break-even point (units needed to maintain current revenue). Calculations use the product's elasticity coefficient and current sales velocity. Available on all plans.
+- **Phase 2 -- Monte Carlo Simulation (Post-MVP, Growth plan)**: A more sophisticated simulator that runs 1,000 Monte Carlo trials per scenario, varying demand elasticity, competitor response probability, and seasonal factors. Outputs a probability distribution of revenue outcomes (10th percentile / median / 90th percentile). Results are displayed as a violin plot chart.
+- **Scenario comparison**: Users can create multiple "what-if" scenarios (e.g., "price increase 10%", "match competitor", "seasonal discount") and compare them side by side. Each scenario card shows projected revenue, margin, and units with confidence intervals.
+
+---
+
+## Verification Targets
+
+| Area | Target | Method |
+|------|--------|--------|
+| Price recommendation accuracy | >70% of accepted recommendations lead to revenue increase within 4 weeks | Compare pre/post revenue for accepted recommendations via `priceHistory` + order data |
+| A/B test statistical validity | p < 0.05 false positive rate confirmed via simulation | Run 1000 A/A tests (same price both arms) and verify <5% declare a winner |
+| Connector sync reliability | >99.5% webhook processing success rate | Monitor `data_sources.lastSyncedAt` freshness and Shopify webhook delivery logs |
+| Dashboard load time | < 600ms for product list (100 products) | Lighthouse CI measurement on staging environment with production-like data volume |

@@ -8,6 +8,8 @@
 
 ### Workflow Engine: Cron-Based Task Scheduler on Vercel + QStash (NOT Temporal.io)
 
+> **Architectural Decision — QStash over Temporal.io:** The spec references Temporal.io for workflow orchestration. This plan uses QStash instead for MVP simplicity -- QStash provides reliable message queuing and scheduled tasks with zero infrastructure overhead. Temporal.io is recommended for post-MVP when complex workflow branching, long-running sagas, and advanced retry policies are needed.
+
 **Decision:** Use a simplified cron-based scheduler with Upstash QStash for durable task scheduling instead of Temporal.io.
 
 **Rationale:**
@@ -65,11 +67,11 @@
 **Implementation:**
 - Generate a `nanoid(32)` token stored in `new_hire_portals.access_token`
 - Portal URL: `https://app.onboardflow.com/portal/[access_token]`
-- Token validated via DB lookup on every request; portal data fetched in a single tRPC query
+- Token validated via DB lookup on every request; portal data fetched in a single tRPC query. Token comparison uses `crypto.timingSafeEqual` to prevent timing attacks on the access token.
 - Token expires via `expires_at` column (default: 90 days after start_date)
 - No session/cookie -- stateless token validation per request
 - New hire can check off their own tasks via a `POST /api/portal/[token]/tasks/[taskId]/complete` endpoint
-- Rate limited to 60 requests/minute per token via Upstash Redis
+- Rate limited to 60 requests/minute per token via Upstash Redis, with progressive backoff: after exceeding the limit, `Retry-After` header doubles with each consecutive violation (1s, 2s, 4s, 8s, max 60s). Repeated abuse (>5 violations within 10 minutes) triggers a temporary 15-minute block on the token.
 
 ### File Storage: AWS S3
 
@@ -1550,3 +1552,15 @@ onboardflow/
 13. **Plan Enforcement**: On Starter plan, attempt to create 6th hire in a month -> verify error "Plan limit reached" -> attempt to create 4th template -> verify error -> attempt to connect 3rd integration -> verify error
 14. **Workflow Validation**: Create template with a node missing required config (task without assignee) -> attempt to activate -> verify validation error displayed on the node in the editor
 15. **Delay Nodes**: Create onboarding with a delay node (2 days) -> verify delay task enters "in_progress" -> manually trigger QStash callback -> verify delay completes and downstream task activates
+
+---
+
+## Post-MVP Roadmap
+
+The following features extend OnboardFlow beyond the core MVP scope:
+
+- **Conditional branching (if/else step flows)**: Allow workflow templates to include conditional nodes that route the onboarding path based on new hire attributes (e.g., department = "Engineering" follows a different path than "Sales"). Requires a `ConditionNode` type in the workflow builder and branching logic in the execution engine.
+- **E-signature integration (DocuSign / HelloSign)**: Embed electronic signature requests into the onboarding workflow. Form nodes gain a `requiresESignature` flag that triggers an e-signature request via DocuSign or HelloSign API. Signed documents are stored in S3 with audit trail metadata.
+- **HRIS sync (BambooHR, Workday, Gusto)**: Bi-directional sync with HRIS platforms. On new hire creation in the HRIS, automatically trigger an onboarding workflow. On onboarding completion, push status back to the HRIS. Adapter pattern similar to integrations (Google/Slack).
+- **Offboarding workflows**: Reverse the onboarding flow: deprovisioning accounts, revoking access, returning equipment, exit interviews. Reuses the same workflow builder and execution engine with a `trigger: "offboard"` type.
+- **Bulk onboarding**: Start multiple onboardings simultaneously from a CSV upload or HRIS import. Supports batch template selection, shared start dates, and bulk progress tracking in a dedicated batch dashboard view.

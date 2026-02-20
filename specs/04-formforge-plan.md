@@ -203,8 +203,15 @@ export type FormFieldSchema = {
   options?: FieldOption[]; // For dropdown, radio, checkbox
   validation?: FieldValidation;
   conditionalLogic?: ConditionalLogic;
-  pageNumber?: number; // For multi-page forms (v2)
+  pageNumber?: number; // For multi-page forms (v2 — see Multi-Page Form Rendering note below)
 };
+
+// NOTE: Multi-Page Form Rendering — deferred to v2. When `pageNumber` is set on
+// fields, the renderer will group fields by page and display prev/next navigation
+// with a progress bar. Page transitions will persist partial responses to
+// sessionStorage and validate the current page before advancing. The form schema
+// already supports `pageNumber` as an optional field; the v2 renderer will honor
+// it while the v1 renderer ignores it and displays all fields on a single page.
 
 export type FieldType =
   | "text"
@@ -218,7 +225,9 @@ export type FieldType =
   | "rating"
   | "file_upload"
   | "section_header"
-  | "hidden";
+  | "hidden"
+  | "signature"     // Post-MVP: signature capture via canvas/touch input, stored as PNG data URL in R2
+  | "rich_text";    // Post-MVP: Tiptap-based rich text editor field for respondents (limited formatting)
 
 export type FieldOption = {
   id: string;
@@ -2589,7 +2598,30 @@ formforge/
 
 ---
 
-## Verification
+## Verification / Testing
+
+### QA Checklist
+
+This comprehensive checklist covers all critical testing areas. Each item should be verified before launch.
+
+1. **Unit tests for form logic** — validate field schema parsing, default value injection, required-field detection, sort order normalization, and field ID uniqueness enforcement. Cover all `FieldType` variants including edge cases (empty options arrays, zero-length validation ranges).
+2. **Integration tests for form submissions** — end-to-end submission pipeline: POST form data to public endpoint, verify `formResponses` and `fieldResponses` rows created with correct field-to-value mapping, response count incremented, and notification job enqueued.
+3. **E2E tests for form builder** — Playwright tests covering: open editor, add 5 field types via drag-and-drop from palette, reorder fields, edit labels/placeholders, toggle required, save, publish, visit public URL, fill out form, submit, verify response appears in dashboard.
+4. **Accessibility testing** — run axe-core on the public form page and form builder. Verify: all inputs have associated labels, focus order is logical, keyboard navigation works for all field types (including drag-and-drop via keyboard), color contrast meets WCAG AA, screen reader announces field errors.
+5. **Mobile responsiveness** — test public form and form builder on iPhone SE (375px), iPhone 14 (390px), iPad (768px), and desktop (1280px+). Verify: fields stack vertically on mobile, file upload tap targets are 44px minimum, rating stars are tappable, drag-and-drop has touch fallback in editor.
+6. **Conditional logic validation** — create forms with conditional show/hide rules: single condition, multiple AND conditions, multiple OR conditions, nested dependencies (field A shows B which shows C), circular dependency detection (A depends on B depends on A — both should hide gracefully).
+7. **File upload limits** — verify: oversized files rejected client-side before upload, wrong MIME types rejected, max file count enforced per field, presigned URL expires after 15 minutes, orphaned uploads cleaned up by daily cron after 24 hours, total org storage limit enforced.
+8. **Payment webhook testing** — (for future Stripe payment fields) verify webhook signature validation, idempotent processing of duplicate events, correct status updates on payment success/failure.
+9. **Email notification delivery** — verify: owner notification sent on submission with correct form title and response preview, respondent confirmation email sent when enabled, Resend message ID stored in notification_log, failed sends recorded with error message.
+10. **Analytics accuracy** — verify: view count increments on page load (not on bot visits), response count matches actual formResponses rows, completion rate = (submitted views / total views) * 100, UTM parameters captured from query string.
+11. **API endpoint security** — verify: all tRPC mutations require Clerk auth, public form submission endpoint validates Turnstile token, form retrieval only returns published forms for public access, org-scoping prevents cross-org data access on every query.
+12. **Rate limiting** — verify: public form submission endpoint rate limited to 10/minute per IP, AI generation endpoint rate limited to 5/minute per user, file upload presigned URL generation limited to 20/minute per user.
+13. **CSRF protection** — verify: Turnstile token required on all public form submissions, Clerk CSRF protection active on authenticated endpoints, webhook endpoints validate signatures.
+14. **Form embedding cross-origin** — verify: embedded iframe form renders correctly on external domains, `X-Frame-Options` allows embedding for published forms, postMessage communication works for height adjustment, custom CSS does not leak to parent page.
+15. **Template rendering** — verify: all 3 system themes (Minimal, Corporate, Playful) render correctly with all field types, custom CSS overrides apply without breaking layout, theme switching in editor reflects immediately in preview.
+16. **Multi-page form navigation** — (v2 deferred) verify: page transitions preserve entered data, back button restores previous page state, per-page validation prevents advancing with errors, progress bar reflects current page accurately.
+17. **Export functionality** — verify: CSV export includes all field labels as headers and all response values, file upload fields export as R2 URLs, date fields export in ISO 8601 format, JSON export matches the documented response schema, exports with 1000+ responses complete within 3 seconds.
+18. **Load testing** — verify: form builder handles forms with 50+ fields without UI jank, public form page loads in <300ms with ISR cache hit, submission endpoint handles 100 concurrent submissions without errors or data loss, response table paginates smoothly with 10K+ responses.
 
 ### Manual Testing Checklist
 

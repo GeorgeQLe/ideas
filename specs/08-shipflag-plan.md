@@ -2,6 +2,8 @@
 
 **MVP Scope:** Boolean + string flags with percentage rollout (sticky via murmur3 hash), user ID targeting, 3 environments (dev/staging/prod), JavaScript + React + Node.js SDKs, dashboard with flag management, basic audit log, real-time updates via SSE, and Stripe billing.
 
+> **Architectural Decision — Flag Type Scope:** JSON and number flag types are deferred to post-MVP. Boolean and string flags cover 90%+ of feature flag use cases; complex types add schema validation complexity that is better addressed after core stability is proven.
+
 ---
 
 ## Tech Decisions
@@ -914,10 +916,15 @@ CREATE INDEX audit_logs_flag_idx ON audit_logs(flag_id);
 
 **Day 17: Node.js SDK resilience**
 - SSE reconnection with exponential backoff (same as JS SDK)
-- Fallback polling: if SSE fails for >60s, fall back to polling GET /sdk/rules every N seconds
+- Fallback polling: if SSE fails for >60s, fall back to polling GET /sdk/rules every N seconds (default 30s interval, configurable via `pollingIntervalMs`)
 - In-memory rule cache: never throw on evaluation; if rules haven't loaded yet, return default value
 - Graceful degradation: if API is completely unreachable, persist last-known rules to disk (`/tmp/shipflag-rules-{envId}.json`) and load on restart
 - Thread safety: rules are replaced atomically (single reference swap, no mutations)
+
+**Server SDK Caching Details:**
+- **Polling interval**: 30s default, configurable via `pollingIntervalMs` in SDK init. Minimum 10s to avoid overloading the API.
+- **Local disk cache fallback**: When the API is unavailable (network error, 5xx), the SDK falls back to the last-known rules persisted to `/tmp/shipflag-rules-{envId}.json`. On startup, if the initial fetch fails, the SDK loads from disk cache to ensure zero-downtime flag evaluation.
+- **Cache invalidation on flag update via webhook**: When a flag is updated in the dashboard, the server publishes to the SSE channel (`flags:{envId}`). Connected SDKs receive the update within seconds. For SDKs in polling mode (SSE disconnected), the next poll picks up changes. The disk cache is refreshed on every successful rules fetch.
 
 **Day 18: Shared evaluation package**
 - Extract evaluation logic into `packages/evaluation/`:
@@ -1457,3 +1464,45 @@ shipflag/
 - [ ] Archive a flag, verify it disappears from list (but exists in audit log)
 - [ ] Production toggle shows confirmation dialog before allowing change
 - [ ] Stale badge appears on flags that are 100% enabled in prod and unchanged for 30+ days
+
+---
+
+## Rate Limiting Response Format
+
+When an SDK endpoint exceeds its rate limit, the API returns HTTP 429 with the following body:
+
+```json
+{
+  "error": "rate_limit_exceeded",
+  "retryAfter": 5,
+  "limit": 100,
+  "remaining": 0
+}
+```
+
+- `retryAfter` (seconds): how long the client should wait before retrying.
+- `limit` (number): the rate limit ceiling for the endpoint (e.g., 100 req/s for flag endpoints, 10 req/s for rules endpoints).
+- `remaining`: always `0` when the 429 is returned.
+
+The `Retry-After` HTTP header is also set with the same value. SDKs should respect this header for automatic backoff.
+
+---
+
+## Audit Log Schema Details
+
+The `audit_logs` table captures every mutation to flags, environments, and configurations for compliance and debugging:
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `id` | UUID | Primary key |
+| `flag_id` | UUID (nullable) | The flag that was modified (null for environment-level actions) |
+| `user_id` | TEXT | Clerk userId of the actor who performed the action |
+| `action` | ENUM | One of: `created`, `updated`, `toggled`, `deleted` |
+| `previous_value` | JSONB (nullable) | Snapshot of the entity state before the change |
+| `new_value` | JSONB (nullable) | Snapshot of the entity state after the change |
+| `ip_address` | TEXT (nullable) | IP address of the request origin (from `x-forwarded-for` or `req.ip`) |
+| `timestamp` | TIMESTAMPTZ | When the action occurred (defaults to `now()`) |
+
+Indexes:
+- `(org_id, timestamp)` for paginated org-level audit log queries
+- `(flag_id, timestamp)` for per-flag audit history

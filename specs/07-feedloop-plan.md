@@ -415,7 +415,45 @@ CREATE INDEX IF NOT EXISTS feedback_items_raw_text_trgm_idx
 -- Trigram index for searching feature request titles
 CREATE INDEX IF NOT EXISTS feature_requests_title_trgm_idx
   ON feature_requests USING gin (title gin_trgm_ops);
+
+-- Feedback Clusters (for grouping similar feedback beyond 1:1 dedup)
+CREATE TABLE IF NOT EXISTS feedback_clusters (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  project_id UUID NOT NULL REFERENCES organizations(id) ON DELETE CASCADE,
+  name TEXT NOT NULL,                         -- Auto-generated or user-edited cluster label
+  centroid_embedding vector(1536),            -- Average embedding of all items in cluster
+  feedback_count INTEGER NOT NULL DEFAULT 0,  -- Denormalized count for fast display
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+CREATE INDEX IF NOT EXISTS feedback_clusters_project_id_idx
+  ON feedback_clusters (project_id);
+CREATE INDEX IF NOT EXISTS feedback_clusters_centroid_idx
+  ON feedback_clusters USING hnsw (centroid_embedding vector_cosine_ops)
+  WITH (m = 16, ef_construction = 64);
+
+-- Junction: feedback_items <-> feedback_clusters (many-to-one)
+ALTER TABLE feedback_items ADD COLUMN IF NOT EXISTS cluster_id UUID
+  REFERENCES feedback_clusters(id) ON DELETE SET NULL;
+CREATE INDEX IF NOT EXISTS feedback_items_cluster_id_idx
+  ON feedback_items (cluster_id);
 ```
+
+### Deduplication / Clustering Workflow
+
+The deduplication pipeline runs on every new feedback item after embedding generation. It uses a two-tier threshold system:
+
+1. **Similarity threshold**: cosine similarity of **0.85** is the boundary between "likely duplicate" and "distinct feedback". This was tuned on a test set of 500 feedback pairs to balance precision (avoiding false merges) and recall (catching true duplicates).
+
+2. **Tier 1 — Auto-link (similarity >= 0.88)**: When a new feedback item's embedding has cosine similarity >= 0.88 with any existing `featureRequest`'s aggregated embedding (average of all linked feedback embeddings), the item is automatically linked to that feature request. The `request_count` and `total_arr_requesting` are updated. An activity log entry is created with `type: "linked_feedback"`. No user intervention required.
+
+3. **Tier 2 — Suggest match (0.85 <= similarity < 0.88)**: Matches in this range are surfaced as "AI Suggested Match" banners in the inbox. The user sees the matching feature request(s) and can confirm (link) or dismiss. Dismissed matches are stored so the same suggestion is not shown again.
+
+4. **Cluster assignment on new feedback**: After dedup matching, the item is assigned to a `feedback_cluster`:
+   - Query `feedback_clusters` for the cluster whose `centroid_embedding` has the highest cosine similarity to the new item's embedding
+   - If the best match has similarity >= 0.85, assign the item to that cluster, increment `feedback_count`, and recompute the `centroid_embedding` as the running average: `new_centroid = (old_centroid * (n-1) + new_embedding) / n`
+   - If no cluster matches above 0.85, create a new cluster with the item's embedding as the initial centroid, `feedback_count = 1`, and an auto-generated name from the item's `extracted_ask` (first 60 chars)
+
+5. **Merge strategy**: When two feature requests are manually merged by a user, their linked feedback items are combined. The cluster centroids are recomputed. If two clusters become identical (all items now belong to the same feature request), the smaller cluster is dissolved and its items absorbed into the larger one.
 
 ---
 
@@ -2088,6 +2126,50 @@ feedloop/
 ---
 
 ## Verification
+
+### Unit Test Targets
+
+Target **>80% code coverage** for the following core modules:
+
+| Module | Key Test Cases | Coverage Target |
+|--------|---------------|-----------------|
+| `src/server/ai/categorization.ts` | All 5 categories classified correctly, confidence thresholds, edge cases (empty text, very short text, non-English), JSON mode parsing errors, fallback behavior on OpenAI API failure | >90% |
+| `src/server/ai/deduplication.ts` | Similarity threshold boundaries (0.84 = suggest, 0.86 = suggest, 0.88 = auto-link), empty embedding handling, no matches found, multiple matches ranked correctly | >90% |
+| `src/server/ai/embedding.ts` | Embedding dimension validation (1536), retry on rate limit, timeout handling, batch embedding for bulk import | >85% |
+| `src/server/integrations/encryption.ts` | Round-trip encrypt/decrypt, wrong key fails, tampered ciphertext fails auth tag, empty string handling | >95% |
+| `src/server/trpc/routers/featureRequest.ts` | Status machine transitions (valid and invalid), priority score computation, kanban order updates, request_count increment on link/unlink | >80% |
+| `src/server/trpc/routers/feedbackItem.ts` | CRUD operations, AI processing enqueue, org-scoping, plan limit enforcement | >80% |
+| `src/server/services/notifications.ts` | Email dispatch on status change, customer filtering, Resend API error handling, duplicate notification prevention | >80% |
+
+### Integration Tests
+
+| Test | Description |
+|------|-------------|
+| **API endpoint tests** | Each tRPC router endpoint tested with authenticated requests: verify input validation (Zod), org-scoping (no cross-org data leak), correct DB mutations, and response shapes. Cover `feedbackItem.create`, `featureRequest.updateStatus`, `feedbackSource.testConnection`. |
+| **Webhook delivery** | Simulate Intercom and Zendesk webhook payloads: verify signature/token validation, feedback item creation, AI processing job enqueued, correct source metadata stored. Test malformed payloads return 400, invalid signatures return 401. |
+| **Email flow** | End-to-end: change feature request status to "shipped" → verify notification rows created for all linked customers → verify Resend API called with correct template data → verify notification status updated to "sent". Test failure: Resend returns 500 → notification status set to "failed" with error message. |
+| **Billing webhook** | Simulate Stripe `checkout.session.completed` → verify org plan updated → verify new plan limits apply. Simulate `customer.subscription.deleted` → verify downgrade to starter. |
+
+### E2E Checklist
+
+Full end-to-end pipeline verification:
+
+1. **Feedback submission** → submit feedback via manual entry form
+2. **AI categorization** → verify category, sentiment, tags, and extracted_ask populated within 5 seconds
+3. **Embedding generation** → verify embedding column is non-null
+4. **Deduplication matching** → submit similar feedback, verify "AI Suggested Match" banner appears in inbox
+5. **Notification** → link feedback to feature request, change status to "shipped", verify customer email notification sent
+6. **Response cycle** → customer receives email with correct feature title and new status
+7. **Analytics update** → verify analytics charts reflect the new feedback item, category distribution updates, sentiment trend updates
+
+### Load Testing Targets
+
+| Scenario | Target | Method |
+|----------|--------|--------|
+| Concurrent feedback submissions | 1000 simultaneous submissions | k6 load test against webhook endpoint; verify all items created, no duplicates, no dropped items, p99 response time < 2s |
+| AI processing queue throughput | 500 items/minute | BullMQ worker processing with concurrency 5; verify all items categorized + embedded within 10 minutes |
+| Dedup search under load | <200ms at 10K items | pgvector HNSW query benchmark with 10,000 embedded feedback items; verify p99 < 200ms |
+| Inbox page with 1000 items | <1s initial load | Paginated query with 50-item pages; verify first page loads in <1s with React Query cache |
 
 ### Manual Testing Checklist
 

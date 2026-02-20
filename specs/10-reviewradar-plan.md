@@ -551,6 +551,53 @@ CREATE INDEX IF NOT EXISTS reviews_feed_composite_idx
 
 ---
 
+## Per-Platform Adapter Details
+
+Each platform adapter implements the `ReviewSourceAdapter` interface with platform-specific configuration:
+
+| Platform | Access Method | Rate Limit | Auth |
+|----------|-------------|------------|------|
+| Google Business | Official Google Business Profile API | 1 req/s per account | OAuth 2.0 (refresh token flow) |
+| Yelp | Fusion API v3 | 5,000 requests/day per API key | API key in `Authorization` header |
+| Trustpilot | Business API (pagination-based) | Per-plan limits, paginated cursor | API key + secret (Basic auth) |
+| G2 / Capterra | Scraping fallback with Playwright | Respect `robots.txt`, 30s minimum between requests | N/A (headless browser) |
+
+**Error Handling (all adapters):**
+- **Retry policy**: 3 attempts with exponential backoff (1s, 4s, 16s) on transient errors (network timeout, 5xx responses, rate limit 429)
+- **Circuit breaker**: After 5 consecutive failures for a source, the adapter enters "open" state for 30 minutes. During this time, poll attempts are skipped and the source status is set to `error`. After the cooldown, the next poll attempt acts as a "half-open" probe -- if it succeeds, the circuit closes; if it fails, the cooldown resets.
+- **Dead letter queue**: Reviews that fail AI processing after 3 retries are moved to a dead letter queue (BullMQ DLQ) for manual review. An admin notification is sent when DLQ items accumulate beyond a threshold (default: 10 items).
+
+---
+
+## Sentiment Accuracy Validation
+
+To ensure AI sentiment analysis is reliable:
+
+- **Benchmark dataset**: Maintain a labeled dataset of 500+ reviews with manually verified sentiment labels (positive / neutral / negative / mixed), topic tags, and categories.
+- **Accuracy target**: >85% agreement between AI predictions and human labels on the benchmark set. Measured via macro-averaged F1 score across all sentiment classes.
+- **Monthly re-evaluation**: Run the benchmark suite monthly against the current model configuration. If accuracy drops below 85%, investigate prompt drift, model version changes, or review distribution shifts.
+- **Confidence threshold**: Reviews with AI confidence below 0.6 are flagged for manual review rather than auto-categorized. These appear in a "Low Confidence" queue in the dashboard for human verification.
+
+---
+
+## Response Draft Approval Workflow
+
+AI-generated response drafts follow a structured approval workflow before publication:
+
+1. **Draft**: AI generates a response based on the selected tone (grateful / professional / empathetic / apologetic). The draft is stored in `reviewResponses.aiDraft`.
+2. **Manager Review**: The draft appears in the "Pending Responses" queue. Assigned reviewers (configurable per org -- typically the location manager or customer success lead) receive an email notification with a link to the review + draft.
+3. **Approve / Edit**: The reviewer can:
+   - **Approve as-is**: Marks the response as ready to publish. `finalText` = `aiDraft`.
+   - **Edit and approve**: Modify the draft text, then approve. `finalText` stores the edited version.
+   - **Reject and re-draft**: Request a new AI draft with a different tone or additional context instructions.
+4. **Publish**: Approved responses are published to the review platform (where API support exists -- currently Google only; Yelp/G2 responses are copied to clipboard for manual posting).
+
+**Notification flow**: Draft created -> email to reviewer -> reviewer action -> if approved, email to original poster confirming response was sent.
+
+**Edit history**: All edits to a response are tracked. The `reviewResponses` table stores both `aiDraft` (original) and `finalText` (final published version). A separate `response_edits` audit trail can be added post-MVP for full diff history.
+
+---
+
 ## Architecture Deep-Dives
 
 ### 1. Platform Adapter Pattern

@@ -481,6 +481,15 @@ export const subscribersRelations = relations(subscribers, ({ one }) => ({
      └────────────┘   └────────────┘   └────────────┘
 ```
 
+### Worker Health Monitoring
+
+Each regional worker implements a heartbeat mechanism to detect stale or crashed workers:
+
+- **Heartbeat reporting**: Every worker POSTs a heartbeat to Redis every 30 seconds: `SET worker:{region}:heartbeat {timestamp} EX 120`. The key includes the worker region and auto-expires after 120 seconds if not refreshed.
+- **Stale worker detection**: A Vercel cron job (`/api/cron/worker-health`) runs every 2 minutes. For each expected region, it checks `GET worker:{region}:heartbeat`. If the key is missing or the timestamp is older than 2 minutes, the worker is considered stale.
+- **Alerting on stale workers**: When a stale worker is detected, the system fires an internal alert to the ops team via email (Resend) and Slack (webhook to an internal channel). The alert includes: region name, last heartbeat timestamp, number of monitors assigned to that region.
+- **Automatic failover**: If a worker in region X is stale for more than 5 minutes, its assigned monitors are temporarily redistributed to the two nearest healthy regions (`SUNIONSTORE worker:{fallbackRegion}:monitors worker:{fallbackRegion}:monitors worker:{staleRegion}:monitors`). When the stale worker recovers and resumes heartbeats, its monitors are reassigned back. A `worker_failover_log` Redis list tracks all failover events for debugging.
+
 ### Worker Process (Node.js)
 
 Each worker is a standalone Node.js process (not a Next.js app) deployed on Railway in a specific region. It:
@@ -1209,6 +1218,12 @@ Keep updates to 2-3 sentences maximum.`;
     });
   }
   ```
+- **SSE Connection Lifecycle Details**:
+  - Connections have a **30-minute server-side timeout** — after 30 minutes the server closes the stream and the client must reconnect
+  - Client reconnects use **exponential backoff**: initial delay 1s, multiplied by 2 on each retry, capped at 30s, with +/-25% jitter to prevent thundering herd
+  - The SSE endpoint sends a `ping` event every 15 seconds as a keepalive; if the client receives no data for 45 seconds it considers the connection dead and reconnects
+  - **Buffer overflow handling**: if the Redis pub/sub message queue for a channel exceeds 100 pending messages (e.g., during a burst of check results), the oldest events are dropped and a `sync` event is sent to tell the client to refetch full state via the REST API instead of relying on incremental updates
+  - The `Last-Event-ID` header is respected on reconnect — the server replays missed events from a short-lived Redis list (last 50 events, 5-minute TTL)
 - Create `src/hooks/use-realtime.ts` -- React hook for SSE subscription:
   ```typescript
   export function useRealtime(orgId: string) {
@@ -1216,6 +1231,8 @@ Keep updates to 2-3 sentences maximum.`;
     // On "monitor_status_changed" → invalidate monitor list query
     // On "incident_created" → invalidate incidents query, show toast
     // On "incident_updated" → invalidate specific incident query
+    // On reconnect: use exponential backoff (1s base, 30s max, jitter)
+    // On "sync" event: refetch all data via tRPC instead of incremental
     // Return: connected status, latest event
   }
   ```
@@ -1342,6 +1359,11 @@ Keep updates to 2-3 sentences maximum.`;
     resolved: "The issue with {monitorName} has been resolved. All systems are operational.",
   };
   ```
+- **Partition creation error recovery strategy**:
+  1. The cron job (`/api/cron/partitions/route.ts`) attempts to create the next month's partition via `CREATE TABLE IF NOT EXISTS checks_YYYY_MM PARTITION OF checks ...`
+  2. If the `CREATE TABLE` fails (e.g., name collision, permission error, disk quota), catch the error, log it to Sentry with full context (partition name, date range, error message), and send an urgent alert to the ops Slack channel
+  3. **Fallback**: if the partition for the current month does not exist when a check result arrives, the check result ingestion endpoint catches the "no partition for value" error, creates the missing partition inline with a `CREATE TABLE IF NOT EXISTS` statement inside a PG advisory lock (`pg_advisory_xact_lock(hash('create_partition_YYYY_MM'))`) to prevent concurrent creation attempts, then retries the insert
+  4. A daily health-check query verifies partitions exist for the current month and the next 2 months; missing partitions are auto-created and logged as warnings
 - Handle partition creation failures: alert via logging, fall back to default partition
 - Rate limit public endpoints: subscriber.subscribe (5/min per IP), status page (100/min per IP)
 

@@ -1567,3 +1567,65 @@ WHERE workspace_id = 'WS_ID'
 | Extension popup open | < 300ms | Cached collections + auth token |
 | Chrome import (1000 bookmarks) | < 60s | Batch insert + async AI processing |
 | Dead link check (100 URLs) | < 30s | Parallel HEAD requests with timeout |
+
+---
+
+## Collection-Scoped Search Filter
+
+The existing search endpoint supports an optional `collectionId` parameter for scoping search results to a specific collection:
+
+```
+GET /api/links/search?q=<query>&collectionId=<uuid>
+```
+
+- When `collectionId` is provided, both semantic and text search results are filtered to bookmarks within that collection (including nested sub-collections up to 5 levels deep via recursive CTE).
+- A composite index on `(collection_id, embedding)` is added to optimize collection-scoped semantic searches, avoiding a full table scan followed by a filter.
+- The search UI includes a "Search in: [All Bookmarks / Current Collection]" toggle that sets or omits the `collectionId` parameter.
+
+---
+
+## Semantic Search Quality Verification
+
+To validate that semantic search returns relevant results, the following verification approach is used:
+
+**SQL queries to test relevance scoring:**
+```sql
+-- Find the top 10 most similar bookmarks to a given query embedding
+SELECT id, title, url,
+       1 - (embedding <=> '<query_vector>'::vector) AS similarity
+FROM bookmarks
+WHERE workspace_id = 'WS_ID' AND embedding IS NOT NULL
+ORDER BY embedding <=> '<query_vector>'::vector
+LIMIT 10;
+```
+
+**Embedding distance thresholds:**
+- Similarity > 0.8: Strong match (same topic, highly relevant)
+- Similarity 0.6-0.8: Moderate match (related topic)
+- Similarity < 0.6: Weak match (typically noise, excluded from results by default)
+
+The default search threshold is set to 0.55 to balance recall and precision. This threshold is configurable per workspace.
+
+**Recall@10 benchmarks:**
+- Maintain a test set of 50 query-bookmark pairs with known relevant results
+- Target: recall@10 >= 0.75 (at least 75% of known relevant bookmarks appear in the top 10 results)
+- Run benchmark after any embedding model change or search algorithm update
+
+---
+
+## Embedding Generation Performance Targets
+
+- **Single link processing**: <500ms per link for embedding generation via `text-embedding-3-small` API. This includes text preparation (title + description + AI summary concatenation) and the API call.
+- **Batch processing for imports**: When importing bookmarks (e.g., Chrome HTML import), embeddings are generated in batches of 50 links per API call using OpenAI's batch embedding endpoint. This reduces per-link latency to ~50ms amortized.
+- **Queue-based async for bulk operations**: All embedding generation runs asynchronously via BullMQ. The bookmark save API returns immediately (< 200ms). For large imports (1000+ bookmarks), a dedicated high-priority queue ensures embedding generation completes within 10 minutes, with progress tracking visible in the import status UI.
+
+---
+
+## Post-MVP Roadmap
+
+The following features extend LinkShelf beyond the core MVP:
+
+- **Smart collections (auto-categorization rules)**: Collections that automatically include bookmarks matching user-defined rules (e.g., "domain contains github.com", "tags include react", "category = documentation"). Uses a rule engine that evaluates on bookmark save and periodically re-evaluates existing bookmarks when rules change.
+- **Weekly digest emails**: Configurable email digests sent via Resend summarizing new bookmarks saved by team members, trending links (most viewed/favorited), and broken link alerts. Frequency options: daily, weekly, or off.
+- **Browser extension improvements**: Firefox support (WebExtension API), sidebar panel for browsing collections without leaving the current page, keyboard shortcuts for quick save (Ctrl+Shift+S), and right-click context menu for saving highlighted text as a note with the bookmark.
+- **Team/shared collections**: Shared collections with granular permissions (view-only, can add, can edit, admin). Activity feed per shared collection showing who added/modified bookmarks. Notification preferences for collection activity.
