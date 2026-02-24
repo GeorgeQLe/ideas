@@ -2706,3 +2706,18 @@ WHERE org_id = 'ORG_ID'
 | CSV export (1000 responses) | < 3s | Streaming response |
 | Turnstile verification | < 500ms | Cloudflare API call |
 | Email notification dispatch | < 2s | Resend API |
+
+---
+
+## Post-MVP Roadmap
+
+| Feature | Description | Priority |
+|---------|-------------|----------|
+| Payment Fields (F4) | Stripe-powered payment collection fields with configurable amounts, one-time and recurring payment support, and receipt generation | High |
+| Multi-Page Wizard Mode (F5) | Step-by-step wizard navigation with progress bar, per-page validation, and back/forward controls — schema already supports `pages` array | High |
+| Advanced Analytics (F9) | Funnel visualization, field-level drop-off analysis, time-to-complete metrics, UTM source breakdown, and embeddable analytics widget | Medium |
+| Signature Field | Canvas/touch-based signature capture stored as PNG data URL in R2, with replay animation in response viewer | Medium |
+| Rich Text Field | Tiptap-based rich text editor for respondents with limited formatting (bold, italic, lists, links) | Medium |
+| Hidden Fields | Pre-populated hidden fields from URL params or embed context for tracking attribution and user identity | Low |
+| Zapier/Webhook Templates | Pre-built Zapier triggers and webhook payload templates for common integrations (Slack, Notion, Airtable, Google Sheets) | Low |
+| Custom CSS Injection | Pro-tier custom CSS editor for advanced form styling beyond theme presets | Low |

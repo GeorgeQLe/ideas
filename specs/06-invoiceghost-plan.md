@@ -691,4 +691,16 @@ Match the writing style of these example emails from the sender:
 - [ ] Verify Stripe billing checkout creates subscription and updates plan
 - [ ] Verify Stripe Customer Portal accessible and returns to app correctly
 
+---
 
+## Post-MVP Roadmap
+
+| Feature | Description | Priority |
+|---------|-------------|----------|
+| Payment Links (F4) | Generate Stripe/PayPal payment links embedded in reminder emails, auto-reconcile on payment, reduce friction for invoice settlement | High |
+| Late Fees & Interest (F7) | Configurable late fee calculation (flat or percentage), automatic interest accrual, late fee line items appended to invoice reminders | High |
+| Team Features / Agency Plan (F9) | Multi-user workspaces with role-based access (admin/member/viewer), client assignment, and team activity dashboard | Medium |
+| QuickBooks / Xero Integration (F1) | Additional invoice source connectors for QuickBooks Online and Xero, with bi-directional sync of invoice status and payment data | Medium |
+| Advanced Reporting (F8) | Collection rate analytics, DSO (Days Sales Outstanding) trends, aging summary reports, and exportable PDF statements | Medium |
+| Activity & Communication Log (F6) | Full timeline of all communications per client/invoice including email opens, clicks, replies, and manual notes | Low |
+| SMS Reminders | Twilio-powered SMS follow-ups as an escalation channel for high-value overdue invoices | Low |

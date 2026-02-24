@@ -1143,6 +1143,8 @@ npm i @readme/openapi-parser js-yaml handlebars
 > *v2 expansion (6+ languages)*: Go (net/http), Ruby (net/http), PHP (cURL), Java (HttpClient), C# (HttpClient), Rust (reqwest). Each language template follows a standard interface: `{ auth, pathParams, queryParams, requestBody, responseHandling, errorHandling }`. Templates stored in `src/server/templates/code/{lang}.hbs`, loaded dynamically at parse time. New languages require only: (1) a `.hbs` template file and (2) a language config entry in `src/server/services/code-examples.ts` specifying syntax highlighting grammar and display name.
 >
 > *Community contribution framework*: Public GitHub repo `documerge/code-templates` with CI validation — each PR runs the template against 10 reference OpenAPI snippets (covering auth types, file uploads, pagination, nested bodies) and diffs output against golden files. Merged templates auto-deploy to production within 30 minutes via GitHub Actions webhook. Contributors recognized on docs site language selector with "Community" badge.
+>
+> **Code example language roadmap:** MVP ships with 3 languages (cURL, JavaScript/fetch, Python/requests). Each uses a Handlebars template in `src/lib/codegen/templates/{lang}.hbs`. v1.1 adds Go (net/http) and Ruby (net/http). v2 adds PHP (cURL), Java (HttpClient), and C# (HttpClient). Community-contributed templates can be added by creating a new `.hbs` file and registering it in the language registry.
 
 **Day 7: Spec import — file upload**
 - `src/server/routers/project.ts` — create project, import spec (file upload)
@@ -1230,6 +1232,8 @@ npm i @readme/openapi-parser js-yaml handlebars
   - Max file size: 10MB per file, 25MB total per request (validated client-side and server-side)
   - Supported detection: auto-detect from `requestBody.content['multipart/form-data']` in endpoint spec, show file input for `format: binary` fields and text inputs for other fields
 
+> **Multipart/file-upload support detail:** For endpoints with `multipart/form-data` request bodies, the playground renders a file picker input alongside text fields for non-file parts. Files are sent directly to the target API (not proxied through DocuMerge servers) to avoid payload size limits. The `Content-Type: multipart/form-data` boundary is auto-generated.
+
 **Day 21: Playground — cURL generation**
 - `src/components/playground/CurlGenerator.tsx` — generate cURL command from current request state
 - Copy cURL to clipboard
@@ -1280,6 +1284,8 @@ npm i @readme/openapi-parser js-yaml handlebars
 - **Free tier**: Primary color + accent color only, DocuMerge branding badge visible in footer
 - **Pro tier ($29/mo)**: Logo upload, full color palette (primary, accent, background, text), font selector from 12 curated Google Fonts, remove DocuMerge branding badge
 - **Enterprise tier ($99/mo)**: All Pro features + custom CSS editor (`<style>` injection scoped to `.documerge-docs` container, max 10KB, sanitized with DOMPurify to strip `position:fixed`, `z-index>1000`, external `url()` references), custom header/footer HTML (sanitized, max 5KB each)
+
+> **Branding tier separation:** **Free tier** includes logo upload, primary/accent color selection, and font family choice (from 5 curated options). **Pro tier** adds custom CSS injection (validated and sandboxed via CSP) and custom domain support. Day 28 implementation covers Free tier branding only; custom CSS injection is a Pro-tier feature implemented in the billing enforcement layer.
 
 **Day 29: Stripe integration**
 - `src/server/services/stripe.ts`, `src/server/routers/billing.ts`
@@ -1333,6 +1339,8 @@ npm i @readme/openapi-parser js-yaml handlebars
   - **Relationship graph**: Minimap showing schema references — clickable nodes linking to referenced schemas (rendered with `reactflow` in a 300px collapsible panel)
   - **Search within schema**: Filter properties by name with instant highlight (debounced 150ms, matches across nested depths)
   - **"Used by" section**: List of endpoints that reference this schema in request body or response (linked to endpoint page)
+
+> **Interactive schema browser:** A dedicated `SchemaViewer` component renders JSON Schema definitions as an expandable tree with: (1) type badges (string, number, object, array, enum), (2) required field indicators, (3) description tooltips, (4) example values inline, (5) nested object expansion (click to drill down). Referenced schemas (`$ref`) are resolved and displayed inline with a 'Jump to definition' link. This component is used both on endpoint detail pages and as a standalone schema explorer accessible via the sidebar.
 
 **Day 37: Polish and edge cases**
 - Large spec handling (1000+ endpoints): pagination, lazy-load sidebar groups
@@ -1480,6 +1488,7 @@ documerge/
 14. **GitHub sync** — connect repo, push spec change, verify docs update within 60s
 15. **Branding** — set logo + colors, verify reflected on docs site
 16. **Plan limits** — free user: try creating second project, verify blocked
+17. **Large spec handling test** — import an OpenAPI spec with 200+ endpoints and 50+ schema components, then verify: (1) import completes in < 30 seconds, (2) sidebar renders all endpoint groups without lag, (3) search across all endpoints returns results in < 500ms, (4) schema browser handles deeply nested objects (5+ levels) without stack overflow
 
 ### SQL Verification Queries
 

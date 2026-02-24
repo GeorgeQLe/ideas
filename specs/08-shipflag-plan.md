@@ -1506,3 +1506,17 @@ The `audit_logs` table captures every mutation to flags, environments, and confi
 Indexes:
 - `(org_id, timestamp)` for paginated org-level audit log queries
 - `(flag_id, timestamp)` for per-flag audit history
+
+---
+
+## Post-MVP Roadmap
+
+| Feature | Description | Priority |
+|---------|-------------|----------|
+| JSON & Number Flag Types (F1) | Extend evaluation engine and SDKs to support JSON object and numeric flag values with schema validation and type-safe SDK generics | High |
+| A/B Testing Integration (F9) | Built-in experiment framework: define flag variants with traffic allocation, track conversion events via SDK, and compute statistical significance with auto-winner selection | High |
+| Edge Evaluation (F6) | Cloudflare Workers-based flag evaluation at the edge for sub-10ms latency. Flag rules synced via KV store with SSE-triggered invalidation | Medium |
+| Flag Lifecycle Management (F8) | Stale flag detection (no evaluations in 30 days), scheduled flag expiration, flag dependency graph, and cleanup recommendations dashboard | Medium |
+| Advanced Analytics (F10) | Flag evaluation volume charts, variant distribution over time, latency percentiles, and error rate monitoring per flag/environment | Medium |
+| Multi-Environment Promotion | One-click flag config promotion from staging → production with diff preview and approval workflow for team plans | Low |
+| Terraform Provider | Infrastructure-as-code support for managing flags, environments, and segments via Terraform or Pulumi | Low |

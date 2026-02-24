@@ -18,7 +18,7 @@
 | Billing | Stripe | Checkout Sessions + Customer Portal + Webhooks |
 | AI — Content | OpenAI GPT-4o | Temperature 0.8 for creative social media copy |
 | AI — Hashtags | OpenAI GPT-4o-mini | JSON mode for hashtag suggestions |
-> **Note:** Image generation (DALL-E 3) deferred to post-MVP — MVP focuses on text content only.
+| AI — Images | DALL-E 3 | *(Post-MVP — not used in MVP, included for v1.1 planning)* |
 | Queue | BullMQ + Redis (Upstash) | Scheduled post publishing + content generation |
 | Social — Twitter | Twitter API v2 (OAuth 2.0 PKCE) | Post tweets, threads (v2 only) |
 | Social — LinkedIn | LinkedIn Marketing API (OAuth 2.0) | Share posts, articles |
@@ -2320,3 +2320,8 @@ ORDER BY created_at DESC;
 | **F7 — Advanced Analytics with Engagement Predictions** | Medium | Pull engagement metrics from Twitter/LinkedIn APIs on a schedule, build per-brand engagement models, and predict best posting times + content types. Requires historical data (8+ weeks). |
 | **F8 — Client / Workspace Management for Agencies** | High | Multi-workspace support: agency users manage multiple client brands from a single login. Per-client billing, white-label reports, client approval workflows. |
 | **F9 — Carousel / Thread Builder** | Medium | Visual builder for multi-image Instagram carousels, Twitter/X thread composer with per-tweet editing, and LinkedIn document (PDF carousel) posts. Requires media upload + ordering UI. |
+
+### Versioned Roadmap
+
+- **v1.1**: AI image generation for social posts (DALL-E 3), Instagram and Facebook publishing via Meta Graph API (spec F5), content recycling/evergreen reposting (spec F6), carousel and thread builder for multi-image/multi-tweet posts (spec F4)
+- **v2**: TikTok publishing, engagement analytics dashboard with best-time-to-post recommendations (spec F7), client/workspace management for agencies (spec F8), trending content suggestions (spec F9), approval workflows for team collaboration

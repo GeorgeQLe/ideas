@@ -1736,6 +1736,8 @@ npm install googleapis
   - Segments stored in `summaries.discussionTopics` with accurate `startMs`/`endMs` timestamps
   - Enables "jump to topic" navigation in the transcript viewer
 
+> **Topic segmentation implementation:** The summarization pipeline extracts discussion topics as first-class entities stored in the `discussionTopics` table. Each topic has a `title`, `summary`, `startTime`, `endTime`, and linked transcript segment IDs. Topics are used for: (1) topic-level navigation in the transcript viewer (click topic -> jump to timestamp), (2) topic-based search filtering, (3) per-topic action item grouping. The topic extraction prompt instructs GPT-4o to identify distinct discussion topics with start/end timestamps from the transcript segments.
+
 **Day 20 — Action item extraction + date parsing**
 - Create `src/server/lib/date-parser.ts`:
   - `parseRelativeDate(raw)`: resolve "by Friday", "next week", "end of month" to actual dates
@@ -1835,6 +1837,8 @@ npm install googleapis
 ### Phase 6: Action Items + Analytics + Glossary Wiring (Days 30–35)
 
 > **Note:** This phase was extended by 2 days (originally Days 30-33, now Days 30-35) to accommodate the complexity of cross-meeting action item tracking, analytics query optimization, and glossary integration wiring into both Deepgram and GPT-4o pipelines.
+>
+> **Scope justification:** Phase 6 scope is tight (originally 4 days for action item tracking + team analytics + glossary). The extension to 6 days (Days 30-35) shifts Phase 7 polish to Days 36-42. The action item cross-meeting tracking and team analytics dashboard each warrant 2 full days of implementation.
 
 **Day 30 — Action item tracker**
 - Create `src/server/trpc/routers/actionItem.ts`:
@@ -1941,6 +1945,8 @@ npm install stripe
     ```
   - Glossary terms injected into action item extraction to improve assignee name matching
   - Glossary terms used as seed vocabulary for topic segmentation labels
+
+> **Glossary-to-pipeline wiring:** Organization glossary terms are passed to both the transcription and summarization stages. (1) Deepgram: terms are added as `keywords` in the Deepgram streaming config (`keywords: glossaryTerms.map(t => ({ term: t.term, boost: 5 }))`) to improve recognition accuracy. (2) GPT-4o summarization: the glossary is included in the system prompt as 'Domain vocabulary -- always use these exact terms: [term: definition]' to ensure summaries use correct terminology rather than generic paraphrases.
 
 ---
 
@@ -2259,3 +2265,8 @@ WHERE org_id = 'ORG_ID'
 | F10 | Zoom + Microsoft Teams Support | Expand beyond Google Meet to Zoom (via Zoom SDK bot) and Microsoft Teams (via Graph API bot). Unified meeting archive across all platforms. | High |
 | F11 | Weekly Digest Email | Automated weekly summary email: meetings attended, total action items created/completed, key decisions across all meetings, upcoming meetings with auto-join status. | Low |
 | F12 | Notion / Confluence Export | One-click export of meeting summaries to Notion pages or Confluence spaces. Auto-create structured pages with linked action items. Template mapping per workspace. | Low |
+
+### Versioned Roadmap
+
+- **v1.1**: CRM integration -- auto-log meeting summaries to Salesforce/HubSpot contact records (spec F9), Microsoft Teams bot support (spec F1), meeting type templates (standup, 1:1, all-hands) with customized summary formats
+- **v2**: Multi-language transcription and translation, video highlight clips (extract key moments), smart scheduling suggestions based on meeting patterns, custom AI models fine-tuned on organization's meeting style

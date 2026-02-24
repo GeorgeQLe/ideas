@@ -2322,3 +2322,17 @@ The revenue impact simulator helps merchants understand the financial consequenc
 | A/B test statistical validity | p < 0.05 false positive rate confirmed via simulation | Run 1000 A/A tests (same price both arms) and verify <5% declare a winner |
 | Connector sync reliability | >99.5% webhook processing success rate | Monitor `data_sources.lastSyncedAt` freshness and Shopify webhook delivery logs |
 | Dashboard load time | < 600ms for product list (100 products) | Lighthouse CI measurement on staging environment with production-like data volume |
+
+---
+
+## Post-MVP Roadmap
+
+| Feature | Description | Priority |
+|---------|-------------|----------|
+| WooCommerce & Stripe Billing Connectors (F1) | Extend data integration beyond Shopify to WooCommerce (REST API) and Stripe Billing (subscriptions + invoices) for broader e-commerce coverage | High |
+| Dynamic Pricing Rules (F7) | Automated rule engine: "If competitor price drops below X, match within Y hours" or "If inventory > Z, reduce price by N%". Rules execute via scheduled evaluation with approval workflow. | High |
+| Advanced Price Elasticity (F3) | Seasonal decomposition, promotional event exclusion, and competitor price correlation in elasticity modeling. Bayesian estimation for products with limited data. | Medium |
+| Multi-Variant A/B Testing (F5) | Expand beyond 2 variants to multivariate testing. Bayesian statistical model for faster winner detection with smaller sample sizes. Auto-apply winning prices. | Medium |
+| SaaS-Specific Features (F9) | Subscription pricing optimization: plan tier analysis, annual vs monthly discount optimization, usage-based pricing recommendations, churn-price sensitivity analysis | Medium |
+| BigCommerce & Amazon Connectors | Additional e-commerce platform support for BigCommerce (REST API) and Amazon Seller Central (SP-API) | Low |
+| Custom API Connector | Generic REST API connector for importing pricing and sales data from custom or niche e-commerce platforms | Low |

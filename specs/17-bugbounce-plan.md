@@ -1651,6 +1651,8 @@ npm i bullmq openai
 - Link display: on bug detail page, show Jira issue key as clickable link
 - Token refresh: handle expired tokens with automatic refresh
 
+> **Integration scope:** MVP includes Jira integration only (two-way sync: create issue from report, sync status updates back). Post-MVP integrations: Linear (v1.1), GitHub Issues (v1.1), Asana (v2). Current Jira sync is one-directional for MVP (BugBounce -> Jira). Bi-directional sync (Jira status changes reflected in BugBounce) is planned for v1.1.
+
 ### Phase 6 — Billing + Plan Enforcement (Days 29–32)
 
 **Day 29: Stripe integration**
@@ -1941,3 +1943,8 @@ GROUP BY status;
 | F7 | Reporter Communication | In-app messaging between team and bug reporters. Email thread integration — reply to reporter notification to add comment. Reporter portal for checking bug status without login. | Low |
 | F8 | User Impact Segments | Tag submissions with user segments (enterprise, free, trial) for prioritization. Auto-enrich from CRM data (HubSpot, Salesforce). Priority boost for high-value customer segments. | Low |
 | F9 | AI Root Cause Clustering | ML-based clustering of related bugs by stack trace and error pattern similarity. Auto-suggest root cause labels. "Related bugs" sidebar on bug detail page. | Low |
+
+### Versioned Roadmap
+
+- **v1.1**: Session replay via rrweb recording (spec F1 -- captures user interactions leading to bug), Linear and GitHub Issues integration (spec F6), bi-directional Jira sync (status changes flow back), SLA tracking with configurable response/resolution time targets (spec F4), duplicate detection performance optimization for 50K+ report corpus
+- **v2**: User communication channel -- in-app messaging between reporters and team (spec F7), public bug tracker with voting and status page (spec F8), analytics and reporting dashboard with trends, resolution time charts, and team performance metrics (spec F9), Asana integration, custom webhook triggers on status changes

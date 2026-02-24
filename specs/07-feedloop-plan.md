@@ -2235,3 +2235,17 @@ WHERE org_id = 'ORG_ID'
 | Kanban board load (100 requests) | < 400ms | Single grouped query |
 | Priority score recomputation (500 requests) | < 2s | Single SQL CTE query |
 | Email notification dispatch | < 2s per email | Resend API |
+
+---
+
+## Post-MVP Roadmap
+
+| Feature | Description | Priority |
+|---------|-------------|----------|
+| Customer Voting Board (F5) | Public-facing portal where customers can browse, vote on, and submit feature requests. Embeddable widget and standalone page with SSO for identity linking. | High |
+| Roadmap Integration (F7) | Visual public roadmap (kanban-style) synced with feature request statuses. Customers see what's planned, in progress, and shipped. Embeddable roadmap widget. | High |
+| Customer Intelligence (F9) | Per-customer profile with feedback history, feature requests, sentiment trend, and ARR impact. CRM-style view for understanding top requesters and at-risk accounts. | Medium |
+| Advanced Analytics (F8) | Feedback volume trends, category distribution over time, response rate metrics, team performance dashboard, and exportable PDF reports | Medium |
+| Slack Integration (F1) | Two-way Slack integration: capture feedback from Slack messages via emoji reactions or slash commands, and post status updates back to channels | Medium |
+| Salesforce / HubSpot Sync | Bi-directional CRM sync to link feedback to customer records, enrich priority scores with deal value, and surface feedback in CRM views | Low |
+| Public API & Webhooks | REST API for programmatic feedback submission and status updates, plus outgoing webhooks for integration with custom tools | Low |

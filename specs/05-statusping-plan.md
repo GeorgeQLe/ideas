@@ -1463,3 +1463,17 @@ Keep updates to 2-3 sentences maximum.`;
 - [ ] Test manual incident creation: create incident, add manual updates, resolve. Verify timeline on status page.
 - [ ] Load test: create 50 monitors (Pro plan) and verify all are being checked at the correct interval across all regions
 - [ ] Verify SSE: open dashboard in 2 browser tabs. Trigger a status change. Verify both tabs update without manual refresh.
+
+---
+
+## Post-MVP Roadmap
+
+| Feature | Description | Priority |
+|---------|-------------|----------|
+| SLA Reporting (F6) | Uptime SLA tracking with configurable targets (99.9%, 99.95%, 99.99%), monthly SLA reports with credit calculation, and customer-facing SLA dashboard | High |
+| Advanced Analytics (F7) | Response time percentiles (p50/p95/p99), geographic latency heatmap, uptime trend charts, and exportable PDF reports | High |
+| TCP/UDP/DNS Monitoring (F1) | Protocol-specific monitors beyond HTTP: TCP port checks, UDP probes, DNS resolution monitoring with expected record validation | Medium |
+| Maintenance Windows (F5) | Scheduled maintenance periods that suppress alerts and show planned downtime on status pages with countdown timer | Medium |
+| Custom Domain Status Pages | Vanity domains for status pages with automatic SSL via Let's Encrypt, CNAME verification, and branded email notifications | Medium |
+| Webhook Integrations | Outgoing webhooks for monitor events (up/down/degraded) for custom integrations beyond Slack and email | Low |
+| Mobile App | Native iOS/Android app with push notification alerts, quick status overview, and incident management | Low |

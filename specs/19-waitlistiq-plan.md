@@ -436,6 +436,25 @@ export const abTestVariants = pgTable(
 );
 
 // ---------------------------------------------------------------------------
+// A/B Test Results (concluded test outcomes)
+// ---------------------------------------------------------------------------
+export const abTestResults = pgTable("ab_test_results", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  projectId: uuid("project_id")
+    .references(() => projects.id, { onDelete: "cascade" })
+    .notNull(),
+  testId: uuid("test_id")
+    .references(() => abTests.id, { onDelete: "cascade" })
+    .notNull(),
+  winnerVariantId: uuid("winner_variant_id"),
+  startedAt: timestamp("started_at", { withTimezone: true }).notNull(),
+  endedAt: timestamp("ended_at", { withTimezone: true }),
+  statisticalSignificance: real("statistical_significance"), // p-value
+  status: text("status").default("running").notNull(), // running | concluded | cancelled
+  createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+});
+
+// ---------------------------------------------------------------------------
 // Relations
 // ---------------------------------------------------------------------------
 export const usersRelations = relations(users, ({ many }) => ({
@@ -2242,9 +2261,12 @@ export async function detectReferralFraud(
 
 > **Critical Coverage Gap:** A/B testing is listed in MVP scope but had zero implementation coverage. The following phase addresses this gap with a complete implementation plan.
 
-### Phase — A/B Testing (2-3 Days, inserted after Landing Page Editor)
+### Phase 5.5: A/B Testing Engine (Days 26-28)
 
-**Day A: A/B test CRUD + variant assignment**
+**Day 26 -- A/B Test Setup & Traffic Splitting**
+- `src/server/routers/abTest.ts` -- tRPC router: `createTest`, `getTestResults`, `concludeTest`
+- `src/lib/ab-splitter.ts` -- traffic splitting logic: hash visitor cookie + test ID -> deterministic variant assignment (consistent across page loads)
+- `src/app/(dashboard)/projects/[id]/ab-testing/page.tsx` -- test creation UI: select sections to vary, set traffic split percentage
 - `src/server/routers/ab-test.ts`:
   - `create`: create test with name, target metric, traffic split percentages
   - `addVariant`: add variant with section overrides (headline/subheadline/CTA overrides per section)
@@ -2256,7 +2278,10 @@ export async function detectReferralFraud(
   - `getActiveTestVariant(projectId, sessionId)`: return variant + section overrides for rendering
   - `recordConversion(testId, variantId)`: increment conversions + recalculate rate
 
-**Day B: Landing page integration + results UI**
+**Day 27 -- Variant Tracking & Results**
+- Update public landing page route to check for active A/B test -> serve variant based on splitter
+- Track `views` and `signups` per variant using atomic `UPDATE ... SET views = views + 1`
+- `src/app/(dashboard)/projects/[id]/ab-testing/results/page.tsx` -- results dashboard: conversion rate per variant, confidence interval, statistical significance indicator
 - Modify `src/app/p/[slug]/page.tsx`:
   - On page load, check for active A/B test via `getActiveTestVariant()`
   - Apply `sectionOverrides` from assigned variant to landing page sections before rendering
@@ -2270,8 +2295,12 @@ export async function detectReferralFraud(
   - Create test wizard: select sections to test, enter variant copy, set traffic split
   - Results view: conversion rate per variant, impressions, statistical significance indicator
 
-**Day C: Winner selection + auto-apply**
-- `src/server/services/ab-testing.ts` → `checkForWinner()`:
+**Day 28 -- Winner Selection & Conclusion**
+- `src/lib/ab-statistics.ts` -- two-proportion z-test for statistical significance (p < 0.05 threshold)
+- Auto-conclude test when significance reached OR after configured duration (default 14 days)
+- "Apply winner" button: replaces main page sections with winning variant's snapshot
+- Add A/B test history log to project settings
+- `src/server/services/ab-testing.ts` -> `checkForWinner()`:
   - Chi-squared test for independence across variants
   - Significance threshold: p < 0.05 (chi-squared critical value 3.841 for df=1)
   - Minimum sample size enforcement (default 100 impressions per variant)
@@ -2280,7 +2309,7 @@ export async function detectReferralFraud(
   - Mark test as "completed" with winner variant ID and p-value
   - Send notification email to project owner
   - Dashboard shows "Apply Winner" button to merge winning copy into landing page
-- `src/server/routers/ab-test.ts` → `applyWinner`:
+- `src/server/routers/ab-test.ts` -> `applyWinner`:
   - Copy winning variant's section overrides into the landing page sections permanently
   - Archive the test
   - Trigger ISR revalidation
@@ -2297,6 +2326,8 @@ The social proof widget provides real-time signup notifications and customizable
 - **Privacy controls**: GDPR-compliant opt-in for name display. Subscribers can opt out of being shown in social proof. City derived from IP geolocation (country-level only, no precise location).
 - **Implementation**: Client component fetching from `/api/public/social-proof/[projectId]` endpoint returning latest 5 signups (name, city, timestamp). Polling every 30 seconds when tab is visible.
 
+> **Social proof widget enhancements:** Beyond the basic counter, the embeddable widget supports: (1) real-time signup popup notifications ('Sarah from NYC just joined -- 2 minutes ago') rendered via SSE stream from the public API, (2) customizable widget styles (position, colors, animation) via widget config stored in `projects.settings.widgetConfig`, (3) milestone celebrations ('We just hit 1,000 signups!' with confetti animation) triggered at configurable thresholds.
+
 ---
 
 ## Launch Day Tools (F8)
@@ -2307,6 +2338,8 @@ Launch day tools enable project owners to transition from waitlist to active pro
 - **Batch Invite**: Select subscribers by position range (e.g., positions 1-100), referral count, or tier. Send invite email with unique access code. Rate-limited to 500 invites per batch to avoid email provider throttling.
 - **Queue Priority Override**: Admin ability to manually move subscribers to specific positions. Bulk position adjustment for VIP/press/partner lists. Audit trail for all manual position changes.
 - **Countdown Timer Widget**: Embeddable countdown timer component for landing page. Configurable target date/time with timezone. Auto-transition to "Doors Open" state. Integrates with project status change (draft -> live -> launched).
+
+> **Launch Day Tools implementation detail:** (1) **Access codes**: `src/lib/access-codes.ts` generates batch access codes (nanoid, 12-char) stored in `accessCodes` table with `maxUses` and `expiresAt`. Codes are distributed via email to approved subscribers. (2) **Batch invites**: admin can select subscribers by position range or segment and trigger batch invite emails via BullMQ (rate-limited to 50/second via Resend). (3) **Queue priority**: subscribers with referral tier 'gold' or 'platinum' get priority access (lower position number). (4) **Countdown timer**: embeddable React component with configurable launch date, synced to server time via API call to prevent client clock skew.
 
 ---
 

@@ -2539,3 +2539,17 @@ GROUP BY platform;
 | Analytics dashboard load | < 800ms | Pre-aggregated sentiment snapshots |
 | Scheduler tick (find due sources) | < 100ms | Indexed `next_check_at` query |
 | Daily snapshot aggregation (1000 reviews) | < 5s | SQL aggregate with FILTER clauses |
+
+---
+
+## Post-MVP Roadmap
+
+| Feature | Description | Priority |
+|---------|-------------|----------|
+| Competitor Monitoring (F5) | Track competitor review profiles across platforms, compare ratings/sentiment trends, and alert on significant competitor rating changes | High |
+| Review Request Campaigns (F6) | Automated email/SMS campaigns to satisfied customers requesting reviews on specific platforms, with timing optimization and A/B subject line testing | High |
+| Multi-Location Management (F9) | Support for businesses with multiple locations — per-location review tracking, location comparison dashboards, and location-level alert rules | Medium |
+| Embeddable Review Widget (F7) | JavaScript widget for embedding curated positive reviews on websites with customizable themes, auto-rotation, and schema.org structured data for SEO | Medium |
+| Advanced Reporting (F8) | Exportable PDF/CSV reports with review volume trends, response rate metrics, sentiment analysis summaries, and executive summary generation via AI | Medium |
+| Additional Platforms | Reddit, Facebook Reviews, Amazon product reviews, Capterra, and ProductHunt as additional review source adapters | Low |
+| Auto-Post Responses | Automatically post approved AI-generated responses to platforms beyond Google Business Profile (Trustpilot, App Store reply via App Store Connect API) | Low |

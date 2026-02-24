@@ -33,11 +33,15 @@
 
 1. **App Adapter Pattern over monolithic integration code**: Each SaaS integration implements a typed `AppAdapter` interface with methods `listUsers()`, `getUserAccess()`, `revokeAccess()`, and `grantAccess()`. New integrations are added by creating a single adapter file and registering it in the adapter registry. This isolates API-specific logic, simplifies testing with mock adapters, and enables parallel development of new connectors.
 
+> **MVP connector scope:** 4 adapters are fully implemented (Google Workspace, Slack, GitHub, AWS IAM). The path to 15+ connectors: v1.1 adds Microsoft 365, Okta, Azure AD, Jira, and Salesforce. v2 adds remaining connectors from the spec's 100+ target list. Each new adapter follows the `AppAdapter` interface pattern and requires ~2-3 days of development.
+
 2. **BullMQ scheduled sync with diff detection over real-time webhooks**: While webhooks are ideal, most SaaS apps have unreliable or limited webhook support for user/access changes. Instead, each connected app syncs on a configurable schedule (hourly/daily) via BullMQ repeatable jobs. The sync worker fetches current state, diffs against the last known state, and emits change events. This provides consistent behavior across all adapters and a single audit trail for all changes.
 
 3. **Access Review as a state machine**: Review campaigns and individual review items follow strict state machines with enforced transitions. Campaign states: `draft` -> `active` -> `completed` | `cancelled`. Item states: `pending` -> `approved` | `revoked` | `flagged`. A "revoked" decision triggers the adapter's `revokeAccess()` method with confirmation logging. This ensures every access decision is auditable and no invalid state transitions occur.
 
 4. **AG Grid for unified access view over custom table components**: The access matrix (users x apps x roles) can reach thousands of rows. AG Grid provides virtual scrolling, server-side row model, built-in column filtering, CSV/Excel export, and cell rendering customization without building a custom virtualized table. The Community edition is sufficient for MVP.
+
+> **SCIM exclusion:** The spec lists SCIM as a connection method, but MVP defers SCIM provisioning. Rationale: SCIM requires implementing a SCIM server endpoint that identity providers push to, adding significant complexity (schema mapping, conflict resolution, partial updates). For MVP, the pull-based adapter pattern (scheduled API polling) provides equivalent functionality for access visibility. SCIM will be added in v2 for real-time provisioning/deprovisioning with Okta and Azure AD.
 
 ---
 
@@ -2062,6 +2066,8 @@ function decryptAllCredentials(
 | All list endpoints | Paginated | Default 50/page, max 200, cursor-based for audit log |
 | Dashboard page load | < 1s | Indexed queries + React Query cache |
 
+> **Large org performance targets:** Unified access view loads in < 3s for orgs with 1,000+ users and 20+ connected apps. AG Grid virtual scrolling handles 50,000+ access records. Sync operations for large apps (1,000+ users) complete within 5 minutes per adapter. Review campaigns with 500+ items render the review interface in < 2s.
+
 ---
 
 ## Post-MVP Roadmap
@@ -2076,3 +2082,8 @@ function decryptAllCredentials(
 | F10 | Additional Adapters (15+) | Expand adapter catalog: Okta, Azure AD, Jira, Notion, Salesforce, Datadog, PagerDuty, Zoom, Dropbox, Box, ServiceNow, Zendesk. Community adapter SDK. | High |
 | F11 | Offboarding Automation | One-click offboarding: revoke all access across connected apps, generate compliance certificate, notify stakeholders. Integrate with HRIS terminate event. | High |
 | F12 | Role Mining & Optimization | ML-based role suggestion: analyze access patterns to recommend optimal role templates. Detect over-privileged users and suggest least-privilege alternatives. | Low |
+
+### Versioned Roadmap
+
+- **v1.1**: Self-service access request portal with approval workflows (spec F5), HRIS integration for auto-onboarding/offboarding (BambooHR, Rippling), 5 additional adapters (Microsoft 365, Okta, Azure AD, Jira, Salesforce)
+- **v2**: Shadow IT discovery via OAuth token analysis and email forwarding rules (spec F6), SOC 2 and ISO 27001 compliance report generation (spec F7), SCIM server for real-time provisioning, SaaS spend analytics and license optimization, 50+ total adapters
