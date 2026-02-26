@@ -2674,6 +2674,36 @@ LIMIT 10;
 
 ---
 
+## Implementation Progress
+
+| Phase | Step | Description | Status |
+|-------|------|-------------|--------|
+| 1 | Day 1 | Project scaffold + environment | Done |
+| 1 | Day 2 | Database schema + Clerk auth | Done |
+| 1 | Day 3 | tRPC foundation + org resolution | Done |
+| 1 | Day 4 | Organization + Member tRPC routers | Done |
+| 1 | Day 5 | Base UI: layout, navigation, dashboard shell | Done |
+| 2 | Day 6 | Check-in tRPC router + submission | Done |
+| 2 | Day 7 | Check-in UI: personal check-in page | Done |
+| 2 | Day 8 | Personal history view | Done |
+| 2 | Day 9 | Manager dashboard: team overview | Done |
+| 2 | Day 10 | Heatmap + trend charts | Done |
+| 3 | Day 11 | Alert engine: burnout detection | Done |
+| 3 | Day 12 | Alert tRPC router + UI | Done |
+| 3 | Day 13 | Digest generation with AI | Done |
+| 3 | Day 14 | Digest email + tRPC router | Done |
+| 3 | Day 15 | BullMQ scheduled jobs | Not started |
+| 4 | Day 16 | Slack OAuth + bot setup | Done |
+| 4 | Day 17 | Slack slash command + modal check-in | Done |
+| 4 | Day 18 | Slack DM reminders | Not started |
+| 4 | Day 19 | Settings page wiring + invite emails | Done |
+| 4 | Day 20 | Billing: Stripe integration | Done |
+| 5 | Day 21-25 | Polish, testing, deployment | Not started |
+
+**Last updated:** 2026-02-26 — Phase 1 Step 4 (organization + member routers, settings page wiring, invite email integration)
+
+---
+
 ## Post-MVP Roadmap
 
 | Feature | Description | Priority |
