@@ -574,6 +574,86 @@
 | 18 | MeetingTLDR | Productivity | Free / $18/mo | Remote workers |
 | 19 | WaitlistIQ | Launch | Free / $19/mo | Indie hackers |
 | 20 | DocuMerge | DevTools | Free / $29/mo | API companies |
+| 21 | CircuitMind | EDA | Free / $49/mo | PCB designers |
+| 22 | FoldSight | Biotech | Free / $79/mo | Structural biologists |
+| 23 | NeuralForge | AI/ML | Free / $79/mo | ML engineers |
+| 24 | ChipFlow | EDA | Free / $199/mo | IC/ASIC designers |
+| 25 | MatDiscover | Materials Science | Free / $99/mo | Materials researchers |
+| 26 | GeneWeave | Bioinformatics | Free / $149/mo | Genomics researchers |
+| 27 | RoboSim | Robotics | Free / $149/mo | Robotics engineers |
+| 28 | QubitStudio | Quantum Computing | Free / $99/mo | Quantum researchers |
+| 29 | MolForge | Drug Discovery | Free / $199/mo | Pharma/chem researchers |
+| 30 | FlowCFD | CFD | Free / $199/mo | Mech/aero engineers |
+| 31 | SpectrumLab | Signal Processing | Free / $79/mo | RF/DSP engineers |
+| 32 | PrintGen | Generative Design | Free / $99/mo | Product designers |
+| 33 | TerraScan | Remote Sensing | Free / $149/mo | Geospatial analysts |
+| 34 | VoltVault | Electrochemistry | Free / $149/mo | Battery engineers |
+| 35 | SynthBio | Synthetic Biology | Free / $99/mo | Bioengineers |
+| 36 | PhotonPath | Photonics | Free / $199/mo | Photonics engineers |
+| 37 | ClimaCast | Climate Modeling | Free / $99/mo | Climate scientists |
+| 38 | StructAI | Structural Eng | Free / $149/mo | Structural engineers |
+| 39 | ReactorSim | Nuclear Eng | Free / $299/mo | Nuclear engineers |
+| 40 | DriveSim | Autonomous Vehicles | Free / $499/mo | AV engineers |
+| 41 | CADForge | CAD | Free / $29/mo | Mechanical engineers |
+| 42 | CAMWorks | CAM/Manufacturing | Free / $99/mo | CNC machinists |
+| 43 | SpiceSim | EDA | Free / $39/mo | Circuit designers |
+| 44 | AeroStream | Aerospace | $199/user/mo | Aerospace engineers |
+| 45 | BioPrint | Bioprinting | $49/mo (Academic) | Tissue engineers |
+| 46 | ControlHub | Control Systems | Free / $49/mo | Controls engineers |
+| 47 | GridSolve | Power Systems | Free / $149/mo | Power engineers |
+| 48 | MEMSLab | MEMS/NEMS | $79/mo (Academic) | MEMS designers |
+| 49 | RadarForge | Radar/RF | Free / $99/mo | Radar engineers |
+| 50 | GeoDesk | Geotechnical | Free / $99/mo | Geotech engineers |
+| 51 | Acoustica | Acoustics | Free / $129/mo | Acoustics engineers |
+| 52 | PipeFlow | Process Piping | Free / $79/mo | Piping engineers |
+| 53 | OptiLens | Optics | Free / $149/mo | Optical engineers |
+| 54 | ThermoCraft | Thermal Mgmt | Free / $129/mo | Thermal engineers |
+| 55 | SeismiQ | Seismic Eng | Free / $149/mo | Seismic/structural eng |
+| 56 | PlasmaTech | Plasma Physics | $99/mo (Academic) | Plasma engineers |
+| 57 | TriboSim | Tribology | Free / $129/mo | Tribologists |
+| 58 | HydroWorks | Hydrology | Free / $129/mo | Water engineers |
+| 59 | NanoDesign | Nanoelectronics | $99/mo (Academic) | Nanoelectronics researchers |
+| 60 | EMField | EM Simulation | Free / $199/mo | RF/antenna engineers |
+| 61 | CombustiQ | Combustion | $149/mo (Academic) | Combustion engineers |
+| 62 | ProChem | Chemical Process | Free / $149/mo | Chemical engineers |
+| 63 | BioMedica | Biomedical | $99/mo (Academic) | Biomedical engineers |
+| 64 | MineAssay | Mining | $149/mo | Mining engineers |
+| 65 | WeldSim | Welding | $199/mo | Welding engineers |
+| 66 | CompForge | Composites | Free / $149/mo | Composites engineers |
+| 67 | PharmaFlow | Pharma Process | $99/mo (Academic) | Pharma engineers |
+| 68 | SonarDeep | Underwater Acoustics | $79/mo (Academic) | Sonar/acoustic engineers |
+| 69 | FormSim | Metal Forming | $199/mo | Metal forming engineers |
+| 70 | LidarSim | LiDAR | Free / $149/mo | LiDAR engineers |
+| 71 | TurboGen | Turbomachinery | $99/mo (Academic) | Turbomachinery engineers |
+| 72 | TextileLab | Textile Eng | $49/mo (Academic) | Textile engineers |
+| 73 | CryoGen | Cryogenics | $99/mo (Academic) | Cryogenic engineers |
+| 74 | PropulSim | Propulsion | Free / $149/mo | Propulsion engineers |
+| 75 | EnviroMod | Environmental | Free / $99/mo | Environmental engineers |
+| 76 | CastSim | Casting/Foundry | Free / $249/mo | Foundry engineers |
+| 77 | BlastCalc | Blast/Explosion | Free / $199/mo | Blast protection eng |
+| 78 | CorroSim | Corrosion | Free / $199/mo | Corrosion engineers |
+| 79 | FireSim | Fire Safety | Free / $249/mo | Fire protection eng |
+| 80 | NoiseLab | NVH | Free / $179/mo | NVH engineers |
+| 81 | GeoSat | Satellite/Orbit | Free / $149/mo | Satellite engineers |
+| 82 | PackSim | Packaging | Free / $149/mo | Packaging engineers |
+| 83 | RailTrack | Railway Eng | Free / $169/mo | Railway engineers |
+| 84 | WaveForge | Coastal/Ocean | Free / $129/mo | Coastal engineers |
+| 85 | SoilChem | Agriculture/Soil | Free / $99/mo | Soil scientists |
+| 86 | PartSim | DEM/Particles | Free / $149/mo | DEM engineers |
+| 87 | VibeLab | Vibration | Free / $119/mo | Vibration engineers |
+| 88 | HeatPipe | Heat Pipes | Free / $99/mo | Thermal engineers |
+| 89 | FoamSim | Polymer/Foam | Free / $149/mo | Polymer engineers |
+| 90 | GlassSim | Glass Forming | Free / $149/mo | Glass engineers |
+| 91 | BridgeWorks | Bridge Eng | Free / $129/mo | Bridge engineers |
+| 92 | TunnelSim | Tunnel Eng | Free / $179/mo | Tunnel engineers |
+| 93 | AntennaSynth | Antenna/5G | Free / $179/mo | Antenna engineers |
+| 94 | SolarPlan | Solar PV | Free / $99/mo | Solar designers |
+| 95 | WindFarm | Wind Energy | Free / $199/mo | Wind farm engineers |
+| 96 | OceanStruct | Offshore Eng | Free / $299/mo | Offshore engineers |
+| 97 | ExplodeSafe | Energetics | Free / $149/mo | Energetics researchers |
+| 98 | FoodProcess | Food Eng | Free / $149/mo | Food engineers |
+| 99 | PaperMill | Pulp & Paper | Free / $129/mo | Paper mill engineers |
+| 100 | MembraneFlow | Membrane Separation | Free / $99/mo | Membrane engineers |
 
 ---
 
@@ -623,5 +703,123 @@ Each product above has a detailed desktop app spec comparing 5 frameworks. See [
 | 38 | StructAI | Tauri | Swift | GPU FEA solver, structural viz |
 | 39 | ReactorSim | Tauri | Swift | GPU neutron transport, air-gapped deploy |
 | 40 | DriveSim | Tauri | Swift | GPU sensor sim, autonomous driving |
+| 41 | CADForge | Tauri | Swift | WebGPU CAD kernel, B-Rep WASM engine |
+| 42 | CAMWorks | Tauri | Swift | GPU toolpath visualization, CNC simulation |
+| 43 | SpiceSim | Tauri | Electron | Circuit schematic editor, SPICE simulation |
+| 44 | AeroStream | Tauri | Swift | GPU FEA/CFD solver, structural visualization |
+| 45 | BioPrint | Tauri | Electron | 3D bioprint visualization, process simulation |
+| 46 | ControlHub | Electron | Tauri | Simulink-like block diagrams (React Flow) |
+| 47 | GridSolve | Tauri | Electron | Power grid visualization, real-time simulation |
+| 48 | MEMSLab | Tauri | Swift | GPU multiphysics, MEMS layout editor |
+| 49 | RadarForge | Tauri | Swift | GPU signal processing, radar waveform viz |
+| 50 | GeoDesk | Tauri | Electron | GIS integration, geotechnical profile viz |
+| 51 | Acoustica | Tauri | Swift | GPU ray tracing, 3D room acoustics viz |
+| 52 | PipeFlow | Tauri | Electron | P&ID schematic editor, piping 3D viz |
+| 53 | OptiLens | Tauri | Swift | GPU ray tracing, optical system design |
+| 54 | ThermoCraft | Tauri | Swift | GPU thermal simulation, 3D heatmap viz |
+| 55 | SeismiQ | Tauri | Swift | GPU FEA, seismic response spectrum viz |
+| 56 | PlasmaTech | Tauri | Swift | GPU plasma simulation, reactor geometry viz |
+| 57 | TriboSim | Tauri | Swift | GPU contact mechanics, surface topography |
+| 58 | HydroWorks | Tauri | Electron | GIS flood mapping, river network viz |
+| 59 | NanoDesign | Tauri | Swift | GPU quantum transport, band structure viz |
+| 60 | EMField | Tauri | Swift | GPU FDTD/FEM, electromagnetic field viz |
+| 61 | CombustiQ | Tauri | Swift | GPU reacting flow, combustion chamber viz |
+| 62 | ProChem | Electron | Tauri | Complex flowsheet editor, process diagrams |
+| 63 | BioMedica | Tauri | Electron | FEA visualization, regulatory document mgmt |
+| 64 | MineAssay | Tauri | Electron | 3D geological modeling, GIS ore body viz |
+| 65 | WeldSim | Tauri | Swift | GPU thermal-mechanical, weld pool viz |
+| 66 | CompForge | Tauri | Swift | GPU laminate analysis, composite draping viz |
+| 67 | PharmaFlow | Electron | Tauri | Process flowsheets, batch record management |
+| 68 | SonarDeep | Tauri | Swift | GPU acoustic propagation, bathymetry viz |
+| 69 | FormSim | Tauri | Swift | GPU forming simulation, die geometry viz |
+| 70 | LidarSim | Tauri | Swift | GPU point cloud processing, 3D terrain viz |
+| 71 | TurboGen | Tauri | Swift | GPU blade CFD, turbomachinery viz |
+| 72 | TextileLab | Tauri | Electron | Fabric weave pattern editor, drape sim |
+| 73 | CryoGen | Tauri | Swift | GPU cryo thermal simulation, magnet viz |
+| 74 | PropulSim | Tauri | Swift | GPU nozzle flow, combustion chamber viz |
+| 75 | EnviroMod | Tauri | Electron | GIS contaminant mapping, groundwater viz |
+| 76 | CastSim | Tauri | Swift | GPU solidification sim, mold filling viz |
+| 77 | BlastCalc | Tauri | Swift | GPU blast wave propagation, structural viz |
+| 78 | CorroSim | Tauri | Electron | Corrosion mapping, inspection data mgmt |
+| 79 | FireSim | Tauri | Swift | GPU fire/smoke CFD, evacuation pathfinding |
+| 80 | NoiseLab | Tauri | Swift | GPU acoustic FEA, NVH frequency viz |
+| 81 | GeoSat | Tauri | Swift | GPU orbit propagation, 3D Earth/satellite viz |
+| 82 | PackSim | Tauri | Electron | Packaging design editor, drop test viz |
+| 83 | RailTrack | Tauri | Electron | GIS track layout, timetable scheduling |
+| 84 | WaveForge | Tauri | Electron | GIS coastal mapping, wave propagation viz |
+| 85 | SoilChem | Tauri | Electron | GIS soil mapping, crop/water modeling |
+| 86 | PartSim | Tauri | Swift | GPU DEM particle simulation, granular viz |
+| 87 | VibeLab | Tauri | Electron | DAQ hardware interface, modal analysis viz |
+| 88 | HeatPipe | Tauri | Swift | GPU two-phase thermal sim, wick structure |
+| 89 | FoamSim | Tauri | Swift | GPU foam expansion sim, mold filling viz |
+| 90 | GlassSim | Tauri | Swift | GPU glass forming sim, fiber draw viz |
+| 91 | BridgeWorks | Tauri | Electron | GIS bridge location, structural FEA viz |
+| 92 | TunnelSim | Tauri | Electron | 3D geology model, TBM simulation viz |
+| 93 | AntennaSynth | Tauri | Swift | GPU EM simulation, antenna pattern viz |
+| 94 | SolarPlan | Tauri | Electron | GIS site layout, solar shading analysis |
+| 95 | WindFarm | Tauri | Electron | GIS wind resource, terrain/wake modeling |
+| 96 | OceanStruct | Tauri | Swift | GPU wave-structure coupling, mooring viz |
+| 97 | ExplodeSafe | Tauri | Swift | GPU detonation simulation, blast effects |
+| 98 | FoodProcess | Electron | Tauri | Process flowsheet editor, recipe management |
+| 99 | PaperMill | Tauri | Electron | Process simulation, pulp quality monitoring |
+| 100 | MembraneFlow | Tauri | Electron | Membrane system designer, fouling analysis |
 
-**Summary:** Tauri recommended for 33/40 products (82%), Electron for 5/40 (13%), Swift for 2/40 (5%). Tauri dominates due to tiny bundle sizes, low memory footprint, and Rust backend synergy with compute-heavy workloads. Electron wins where rich web UI libraries (React Flow, FullCalendar, Konva.js) provide significant development speed advantages. Swift wins for macOS-only products requiring deep OS integration (calendar, audio).
+**Summary:** Tauri recommended for 84/100 products (84%), Electron for 12/100 (12%), Swift for 4/100 (4%). Tauri dominates due to tiny bundle sizes, low memory footprint, and Rust backend synergy with compute-heavy workloads. Electron wins where rich web UI libraries (React Flow, FullCalendar, Konva.js) provide significant development speed advantages or where complex flowsheet/diagram editors are the primary UI. Swift wins for macOS-only products requiring deep OS integration (calendar, audio).
+
+---
+
+## Persona-Based Subspecifications
+
+Each deep-tech product (specs 21-100) has a persona subspec addendum describing how the product experience adapts for different user personas. See [`specs/personas/README.md`](specs/personas/README.md) for the full framework.
+
+### Persona Dimensions
+
+**Experience Level (3 levels):**
+| Level | Key Characteristics |
+|-------|-------------------|
+| Student/Academic | Tutorials, guided workflows, coursework integration, free/discounted pricing |
+| Junior Engineer (0-3 yrs) | Template-heavy, AI-assisted guard rails, common mistake prevention, mentor review |
+| Senior/Expert (5+ yrs) | Full flexibility, scripting/API access, custom model integration, batch processing |
+
+**Role-Based (5 roles):**
+| Role | Key Workflows |
+|------|-------------|
+| Designer/Creator | Rapid iteration, variant generation, visual comparison, parametric exploration |
+| Analyst/Simulator | Mesh setup, solver config, parameter studies, convergence monitoring, post-processing |
+| Manufacturing/Process | Process parameters, quality control, DFM checks, production scheduling, yield optimization |
+| Regulatory/Compliance | Documentation generation, certification packages, standards databases, traceability |
+| Manager/Decision-maker | Dashboards, trade studies, executive summaries, resource allocation, cost-benefit |
+
+### Subspec Files
+
+Each persona subspec file covers 8 persona variants for its product:
+
+```
+specs/personas/{number}-{product-name}-personas.md
+```
+
+Each persona section includes:
+1. **Modified UI/UX** — How the interface adapts (simplified wizard vs. expert console)
+2. **Feature Gating** — Which features are exposed/hidden for that persona
+3. **Pricing Tier Alignment** — Which pricing tier best serves that persona
+4. **Onboarding Flow** — Persona-specific first-run experience
+5. **Key Workflows** — 3-5 primary use cases unique to that role
+
+### Cross-Reference Relevance Matrix
+
+Not every role applies equally to every product category:
+
+| Product Category | Designer | Analyst | Manufacturing | Regulatory | Manager |
+|-----------------|----------|---------|---------------|------------|---------|
+| CAD/Geometry (41, 42) | **P** | S | **P** | S | S |
+| Simulation/FEA (30, 38, 44, 55) | S | **P** | S | S | S |
+| EDA/Electronics (21, 24, 43, 48, 60) | **P** | **P** | **P** | S | S |
+| Process Engineering (52, 62, 67, 98) | S | **P** | **P** | **P** | S |
+| Biomedical/Pharma (22, 26, 29, 45, 63) | S | **P** | S | **P** | S |
+| Civil/Infrastructure (50, 55, 58, 91, 92) | **P** | **P** | S | **P** | **P** |
+| Environmental (37, 75, 84, 85) | S | **P** | S | **P** | **P** |
+| Energy Systems (34, 47, 94, 95) | S | **P** | S | **P** | **P** |
+| Aerospace/Defense (44, 68, 74, 77, 81) | S | **P** | **P** | **P** | S |
+| Manufacturing (42, 65, 66, 69, 76, 89, 90) | S | S | **P** | S | S |
+
+**P** = Primary (deeply relevant, dedicated workflows), **S** = Secondary (useful but not core)
