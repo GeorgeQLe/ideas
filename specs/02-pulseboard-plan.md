@@ -2692,7 +2692,7 @@ LIMIT 10;
 | 3 | Day 12 | Alert tRPC router + UI | Done |
 | 3 | Day 13 | Digest generation with AI | Done |
 | 3 | Day 14 | Digest email + tRPC router | Done |
-| 3 | Day 15 | BullMQ scheduled jobs | Not started |
+| 3 | Day 15 | BullMQ scheduled jobs | Done |
 | 4 | Day 16 | Slack OAuth + bot setup | Done |
 | 4 | Day 17 | Slack slash command + modal check-in | Done |
 | 4 | Day 18 | Slack DM reminders | Not started |
