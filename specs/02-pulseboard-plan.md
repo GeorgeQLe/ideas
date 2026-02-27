@@ -2695,12 +2695,13 @@ LIMIT 10;
 | 3 | Day 15 | BullMQ scheduled jobs | Done |
 | 4 | Day 16 | Slack OAuth + bot setup | Done |
 | 4 | Day 17 | Slack slash command + modal check-in | Done |
-| 4 | Day 18 | Slack DM reminders | Not started |
+| 4 | Day 18 | Slack DM reminders | Done |
 | 4 | Day 19 | Settings page wiring + invite emails | Done |
 | 4 | Day 20 | Billing: Stripe integration | Done |
-| 5 | Day 21-25 | Polish, testing, deployment | Not started |
+| 5 | Day 21 | Onboarding wizard (clerkProcedure, onboarding router, 5-step wizard, dashboard guard) | Done |
+| 5 | Day 22-25 | Polish, testing, deployment | Not started |
 
-**Last updated:** 2026-02-26 — Phase 1 Step 4 (organization + member routers, settings page wiring, invite email integration)
+**Last updated:** 2026-02-27 — Phase 5 Day 21 (onboarding wizard with clerkProcedure, onboarding router, 5-step wizard page, dashboard redirect guard)
 
 ---
 
