@@ -1593,7 +1593,7 @@ Response format:
 | 2 | Day 5 | GitHub App setup | Done |
 | 2 | Day 6 | GitHub OAuth installation flow | Done |
 | 2 | Day 7 | Repository management UI + settings page | Done |
-| 2 | Day 8 | Webhook receiver + signature verification | Not started |
+| 2 | Day 8 | Webhook receiver + signature verification | Done |
 | 2 | Day 9 | Webhook processor — PR merged | Not started |
 | 2 | Day 10 | Webhook processor — GitHub Release published | Not started |
 | 3 | Day 11 | AI generation service | Not started |
@@ -1622,7 +1622,9 @@ Response format:
 | 7 | Day 34 | Polish and edge cases | Not started |
 | 7 | Day 35 | Launch preparation | Not started |
 
-**Last updated:** 2026-02-27 — Phase 2 Day 7 (repository settings page with tone, audience, auto-publish, ignored paths configuration)
+**Last updated:** 2026-02-27 — Phase 2 Day 8 (webhook hardening: signature verify utility, idempotency via delivery_id, authenticated diff fetching, ignored paths filtering)
+
+**TODO:** Run `npx drizzle-kit push` once `.env` with `DATABASE_URL` is configured — applies `delivery_id` column + unique index to `webhook_events` table.
 
 ---
 
