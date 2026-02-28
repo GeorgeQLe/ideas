@@ -1598,7 +1598,7 @@ Response format:
 | 2 | Day 10 | Webhook processor — GitHub Release published | Done |
 | 3 | Day 11 | AI generation service | Done |
 | 3 | Day 12 | AI quality tuning | Done |
-| 3 | Day 13 | Regeneration and feedback | Not started |
+| 3 | Day 13 | Regeneration and feedback | Done |
 | 3 | Day 14 | Entry management | Not started |
 | 4 | Day 15 | Dashboard home | Not started |
 | 4 | Day 16 | Release list and management | Not started |
@@ -1622,7 +1622,7 @@ Response format:
 | 7 | Day 34 | Polish and edge cases | Not started |
 | 7 | Day 35 | Launch preparation | Not started |
 
-**Last updated:** 2026-02-27 — Phase 3 Day 12 (AI quality tuning: expanded noise patterns, category-specific prompt hints, smart diff truncation at hunk boundaries, empty diff handling, test-only PR detection, non-English content handling, vitest test suite with 85 tests)
+**Last updated:** 2026-02-27 — Phase 3 Day 13 (feedback-aware regeneration: `regenerateChangelog` with user feedback, collapsible feedback UI, 93 tests)
 
 **TODO:** Run `npx drizzle-kit push` once `.env` with `DATABASE_URL` is configured — applies `delivery_id` column + unique index to `webhook_events` table.
 
