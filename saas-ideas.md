@@ -823,3 +823,16 @@ Not every role applies equally to every product category:
 | Manufacturing (42, 65, 66, 69, 76, 89, 90) | S | S | **P** | S | S |
 
 **P** = Primary (deeply relevant, dedicated workflows), **S** = Secondary (useful but not core)
+
+---
+
+## Implementation Plans
+
+All 99 products (1-100, excluding 94) have detailed code-level implementation plans with database schemas, architecture deep-dives, day-by-day phase breakdowns, solver validation benchmarks, deployment architecture, and post-MVP roadmaps.
+
+| Stack | Specs | Phases | Timeline |
+|-------|-------|--------|----------|
+| Next.js, tRPC, Drizzle ORM, Clerk Auth | 1-20 | 7 phases | 35 days |
+| Rust/Axum, WASM, React, PostgreSQL, S3, Python FastAPI | 21-100 | 8 phases | 42 days |
+
+Plans are located at `specs/{number}-{name}-plan.md`.
