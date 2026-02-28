@@ -1596,7 +1596,7 @@ Response format:
 | 2 | Day 8 | Webhook receiver + signature verification | Done |
 | 2 | Day 9 | Webhook processor — PR merged | Done |
 | 2 | Day 10 | Webhook processor — GitHub Release published | Done |
-| 3 | Day 11 | AI generation service | Not started |
+| 3 | Day 11 | AI generation service | Done |
 | 3 | Day 12 | AI quality tuning | Not started |
 | 3 | Day 13 | Regeneration and feedback | Not started |
 | 3 | Day 14 | Entry management | Not started |
@@ -1622,7 +1622,7 @@ Response format:
 | 7 | Day 34 | Polish and edge cases | Not started |
 | 7 | Day 35 | Launch preparation | Not started |
 
-**Last updated:** 2026-02-27 — Phase 2 Day 10 (release webhook backfill: compare-commits API to discover PRs merged since last tag, generate changelog entries for missed PRs, link to release)
+**Last updated:** 2026-02-27 — Phase 3 Day 11 (BullMQ async job queue for AI changelog generation: queue config, worker process, webhook handlers enqueue jobs instead of inline processing, graceful sync fallback when REDIS_URL not set)
 
 **TODO:** Run `npx drizzle-kit push` once `.env` with `DATABASE_URL` is configured — applies `delivery_id` column + unique index to `webhook_events` table.
 
