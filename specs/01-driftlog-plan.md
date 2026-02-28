@@ -1600,7 +1600,7 @@ Response format:
 | 3 | Day 12 | AI quality tuning | Done |
 | 3 | Day 13 | Regeneration and feedback | Done |
 | 3 | Day 14 | Entry management | Done |
-| 4 | Day 15 | Dashboard home | Not started |
+| 4 | Day 15 | Dashboard home | Done |
 | 4 | Day 16 | Release list and management | Not started |
 | 4 | Day 17 | Release editor — entry list | Not started |
 | 4 | Day 18 | Release editor — rich text | Not started |
@@ -1622,7 +1622,7 @@ Response format:
 | 7 | Day 34 | Polish and edge cases | Not started |
 | 7 | Day 35 | Launch preparation | Not started |
 
-**Last updated:** 2026-02-27 — Phase 3 Day 14 (router unit tests: 28 tests for changelog + release routers, 121 total tests)
+**Last updated:** 2026-02-27 — Phase 4 Day 15 (dashboard home: real entry count query, quick action buttons, linked release list)
 
 **TODO:** Run `npx drizzle-kit push` once `.env` with `DATABASE_URL` is configured — applies `delivery_id` column + unique index to `webhook_events` table.
 
