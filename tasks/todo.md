@@ -70,24 +70,49 @@ Fix 19 validated code review findings across 5 sub-projects (DriftLog, PulseBoar
 
 ## Phase 2: SnipVault SQL Injection Fix (CR-001)
 
+### Detailed Implementation Plan (for fresh context)
+
+**Problem:** `snipvault/src/lib/trpc/routers/search.ts` uses `sql.unsafe()` with string-concatenated user input on lines 53-75, 93, 107, 170. The `language` and `collectionId` params are interpolated directly into filter strings.
+
+**Architecture:** The file uses `neon()` from `@neondatabase/serverless` (NOT drizzle's `sql`). The `neon()` tagged template function (`const sql = neon(...)` at line 50) already supports parameterized queries via its tagged template syntax. The key issue is lines 53-75 build filters as plain strings, then `sql.unsafe(filterClause)` injects them raw.
+
+**Approach — Extract `buildFilterClause` helper:**
+1. Create a helper function `buildFilterClause(params: { workspaceId, language?, collectionId?, tagSnippetIds? })` that returns an object `{ text: string, values: unknown[] }` using numbered placeholders (`$1`, `$2`...).
+2. However, since neon tagged template handles parameterization automatically, the better approach is to build the WHERE clause as multiple `AND` conditions directly in the tagged template, using conditional SQL fragments.
+3. **Simplest fix:** Replace the string concat + `sql.unsafe()` pattern with individual parameterized conditions chained with `AND` in each SQL query. Use neon's tagged template `${value}` for all user inputs.
+
+**Specific changes to `snipvault/src/lib/trpc/routers/search.ts`:**
+- Remove lines 52-75 (string filter building)
+- In each of the 3 SQL queries (lines 83-132, 150-173, and the `similar` query which is already safe):
+  - Replace `${sql.unsafe(filterClause)}` with inline parameterized conditions:
+    ```sql
+    AND s.workspace_id = ${workspaceId}
+    AND (${language}::text IS NULL OR s.language = ${language})
+    AND (${collectionId}::text IS NULL OR s.collection_id = ${collectionId}::uuid)
+    AND (${tagSnippetIds}::text[] IS NULL OR s.id = ANY(${tagSnippetIds}))
+    ```
+  - This uses PostgreSQL's `IS NULL` trick: when the param is null, the condition is always true (no filtering).
+- Remove the `filterClause` variable entirely
+- Remove `sql.unsafe` import/usage
+
+**Test strategy:** Since the neon driver needs a real DB, unit tests should verify the _absence_ of `sql.unsafe()` and the _presence_ of parameterized patterns. The functional test is a grep-based static analysis + build verification.
+
 ### Tests First
 - Step 2.1: Write tests for parameterized search filters
   - File: create `snipvault/src/lib/trpc/routers/__tests__/search.test.ts`
   - Test cases:
-    - `buildFilterClause` with normal language value produces parameterized SQL (no string interpolation)
-    - `buildFilterClause` with SQL injection payload (`'; DROP TABLE --`) is treated as literal string value
-    - `buildFilterClause` with collectionId containing special chars is parameterized
-    - `buildFilterClause` with tagIds filters correctly
-    - `buildFilterClause` with no optional filters returns only workspace filter
-  - All tests should FAIL initially (function doesn't exist yet / still uses unsafe)
+    - Static analysis: read search.ts source, assert zero occurrences of `sql.unsafe`
+    - Static analysis: read search.ts source, assert zero occurrences of string template `'${` (single-quote interpolation in filter strings)
+    - Verify the file exports a `searchRouter` (import test)
+  - All tests should FAIL initially (file still has sql.unsafe)
 
 ### Implementation
 - Step 2.2: Refactor filter construction in search router
   - File: modify `snipvault/src/lib/trpc/routers/search.ts`
-  - Replace string concatenation filter building (lines 53-75) with `SQL[]` array using `sql` tagged template literals
-  - Use `sql.join(conditions, sql` AND `)` to combine
-  - Replace all `sql.unsafe(filterClause)` calls (lines ~93, ~107, ~170) with the parameterized filter clause
-  - Ensure `ctx.workspaceId`, `language`, `collectionId` are all passed as parameters
+  - Remove string concatenation filter building (lines 53-75)
+  - Replace all 3 `sql.unsafe(filterClause)` calls (lines 93, 107, 170) with inline parameterized conditions using neon's tagged template
+  - Use the `IS NULL OR` pattern for optional filters
+  - For tagSnippetIds: use `= ANY(${tagSnippetIds})` with the array passed as a parameter
   - Remove ALL `sql.unsafe()` usage from this file
 
 ### Green
