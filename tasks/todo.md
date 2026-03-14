@@ -138,6 +138,37 @@ Fix 19 validated code review findings across 5 sub-projects (DriftLog, PulseBoar
 
 ## Phase 3: FormForge Auth & AuthZ Fixes (CR-002, CR-003)
 
+### Detailed Implementation Plan (for fresh context)
+
+**Problem:** Two auth gaps in FormForge:
+1. **CR-002:** `formforge/src/app/api/upload/presigned/route.ts` has NO authentication — any anonymous request can generate S3 presigned URLs. The route is also listed as public in middleware.
+2. **CR-003:** `formforge/src/server/trpc/routers/response.ts` has three mutations (`updateStatus`, `bulkUpdateStatus`, `delete`) that only check `formResponses.id` in their WHERE clause — they don't scope by `formId`, so any authenticated user can modify/delete ANY response across all forms.
+
+**Current state of files:**
+- `presigned/route.ts`: Already imports `auth` from `@clerk/nextjs/server` and `NextResponse` — just needs the auth check added.
+- `middleware.ts`: Line 10 has `"/api/upload/presigned"` in public routes — needs removal.
+- `response.ts`: Already imports `and`, `eq` from `drizzle-orm` and `formResponses` from schema. The `updateStatus` WHERE is at line 225, `bulkUpdateStatus` at line 256, `delete` at line 279.
+
+**Specific changes:**
+
+1. **`formforge/src/app/api/upload/presigned/route.ts`** — Add auth check at top of POST handler:
+   ```typescript
+   const { userId } = await auth();
+   if (!userId) {
+     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+   }
+   ```
+
+2. **`formforge/src/middleware.ts`** — Remove `"/api/upload/presigned"` from the public routes array.
+
+3. **`formforge/src/server/trpc/routers/response.ts`** — Add `formId` to WHERE clause in 3 places:
+   - Line 225: `.where(eq(formResponses.id, input.id))` → `.where(and(eq(formResponses.id, input.id), eq(formResponses.formId, input.formId)))`
+   - Line 256: `.where(eq(formResponses.id, id))` → `.where(and(eq(formResponses.id, id), eq(formResponses.formId, input.formId)))`
+   - Line 279: `.where(eq(formResponses.id, input.id))` → `.where(and(eq(formResponses.id, input.id), eq(formResponses.formId, input.formId)))`
+   - Verify `input.formId` is already in the input schema for these mutations (it is — used for ownership verification earlier in the procedure).
+
+**Test strategy:** Static analysis tests since these endpoints need real DB/Clerk. Grep for missing formId scoping and unprotected routes.
+
 ### Tests First
 - Step 3.1: Write tests for presigned URL auth and response ownership
   - File: create `formforge/src/server/__tests__/presigned-url-auth.test.ts`
