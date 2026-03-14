@@ -28,3 +28,17 @@
 - Used `params.push(val)` returning 1-based index for `$N` placeholder generation
 - Used `= ANY($N)` for array filtering instead of `IN (...)`
 - Neon callable form `sql(queryString, params)` for dynamic WHERE clauses; tagged template `sql\`...\`` kept for static queries (similar)
+
+## 2026-03-14: Phase 3 — FormForge Auth & AuthZ Fixes (CR-002, CR-003)
+
+**What was done:**
+- CR-002: Added `await auth()` check to presigned URL endpoint (`formforge/src/app/api/upload/presigned/route.ts`) — returns 401 for unauthenticated requests
+- CR-002: Removed `/api/upload/presigned` from public routes in `formforge/src/middleware.ts`
+- CR-003: Added `formId` scoping to 3 response mutations (`updateStatus`, `bulkUpdateStatus`, `delete`) in `formforge/src/server/trpc/routers/response.ts` — prevents cross-form response manipulation
+- Created `formforge/src/server/trpc/routers/__tests__/response.test.ts` with 3 static analysis tests (all passing)
+- Fixed pre-existing build errors: renamed `client.ts` → `client.tsx` (JSX parse error) and fixed Stripe SDK v20 API change in `billing.ts`
+- All 4 tests passing across 2 test files in formforge; TypeScript compiles cleanly
+
+**Key changes:**
+- All `.where(eq(formResponses.id, ...))` in mutations now use `.where(and(eq(formResponses.id, ...), eq(formResponses.formId, ...)))`
+- Presigned URL route now behind Clerk auth (both middleware route matcher and in-handler check)
