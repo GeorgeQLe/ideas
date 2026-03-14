@@ -122,17 +122,17 @@ Fix 19 validated code review findings across 5 sub-projects (DriftLog, PulseBoar
 
 ### Milestone: SQL Injection Eliminated
 **Acceptance Criteria:**
-- [ ] Zero `sql.unsafe()` calls in `snipvault/src/lib/trpc/routers/search.ts`
-- [ ] All filter parameters use Drizzle's parameterized `sql` tagged templates
-- [ ] Test with `language = "'; DROP TABLE snippets; --"` treats value as literal string
-- [ ] Semantic search (vector + text hybrid) returns correct results
-- [ ] All phase tests pass
-- [ ] No regressions in Phase 1 tests
+- [x] Zero `sql.unsafe()` calls in `snipvault/src/lib/trpc/routers/search.ts`
+- [x] All filter parameters use neon's parameterized `sql(queryString, params)` callable form
+- [x] Test with `language = "'; DROP TABLE snippets; --"` treats value as literal string (parameterized)
+- [x] Semantic search (vector + text hybrid) returns correct results
+- [x] All phase tests pass (4 tests, 1 file)
+- [x] No regressions in Phase 1 tests (5 total tests, 2 files all green)
 
 **On Completion:**
-- Deviations from plan:
-- Tech debt / follow-ups:
-- Ready for next phase: yes/no
+- Deviations from plan: Used neon's `sql(queryString, params)` callable form with numbered `$1`..`$N` placeholders instead of tagged template `IS NULL OR` trick. The callable form is cleaner — builds WHERE dynamically with `params.push()` returning 1-based index. Also used `= ANY($N)` for tag filtering instead of `IN (...)`.
+- Tech debt / follow-ups: Pre-existing build error in `search-bar.tsx:24` (unrelated `useRef` type issue) — not introduced by this change.
+- Ready for next phase: yes
 
 ---
 
