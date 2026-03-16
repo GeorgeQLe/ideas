@@ -235,27 +235,79 @@ Fix 19 validated code review findings across 5 sub-projects (DriftLog, PulseBoar
   - Tests should FAIL initially
 
 ### Implementation
-- Step 4.2: Replace `z.any()` with strict settings schema (CR-006)
-  - File: modify `formforge/src/server/trpc/routers/form.ts`
-  - At line 136, replace `settings: z.any().optional()` with:
-    ```
-    settings: z.object({
-      notificationEmails: z.string().optional(),
-      responseLimit: z.number().int().positive().optional(),
-      closeDate: z.string().datetime().optional(),
-      redirectUrl: z.string().url().optional(),
-      successMessage: z.string().max(500).optional(),
-      gdprConsentEnabled: z.boolean().optional(),
-    }).optional()
-    ```
-  - Check if this schema is used in both `create` and `update` mutations — apply to both
-  - Verify the settings page UI still saves correctly
+- Step 4.2: Replace `z.any()` with strict settings schema (CR-006) and add CSV export limit (CR-007)
 
-- Step 4.3: Add LIMIT to CSV export query (CR-007)
-  - File: modify `formforge/src/server/trpc/routers/response.ts`
-  - In `exportCsv` procedure (~line 287+), add `.limit(10_000)` to the responses query
-  - Add a `truncated` boolean to the return value: `truncated: responses.length >= 10_000`
-  - Update the frontend export handler to show a warning if `truncated` is true
+#### Detailed Implementation Plan (for fresh context)
+
+**What was done in 4.1:** Created failing tests in formforge:
+- `formforge/src/server/trpc/routers/__tests__/form-settings.test.ts` — 3 tests checking z.any() removed, known fields present, .strict() used
+- `formforge/src/server/trpc/routers/__tests__/response-export.test.ts` — 2 tests checking .limit() on formResponses query and `truncated` return field
+- All 5 new tests FAIL (red). 4 existing tests pass.
+
+**CR-006 Fix — File: `formforge/src/server/trpc/routers/form.ts`**
+
+At line 136, replace `settings: z.any().optional()` with a strict settings schema:
+```typescript
+settings: z.object({
+  notificationEmails: z.string().optional(),
+  responseLimit: z.number().int().positive().optional(),
+  closeDate: z.string().datetime().optional(),
+  redirectUrl: z.string().url().optional(),
+  successMessage: z.string().max(500).optional(),
+  gdprConsentEnabled: z.boolean().optional(),
+}).strict().optional()
+```
+
+Key details:
+- `.strict()` is required — the test checks for it and verifies `.passthrough()` is absent
+- Only the `update` mutation (line 130) uses settings — the `create` mutation (line 97) does NOT accept settings
+- The test checks that ALL 6 field names appear somewhere in `form.ts`, so every field must be present
+
+**CR-007 Fix — File: `formforge/src/server/trpc/routers/response.ts`**
+
+In the `exportCsv` procedure (starts at line 287), modify the formResponses query at lines 306-310:
+```typescript
+// Current (unbounded):
+const responses = await ctx.db
+  .select()
+  .from(formResponses)
+  .where(eq(formResponses.formId, input.formId))
+  .orderBy(desc(formResponses.submittedAt));
+
+// Change to (bounded):
+const MAX_EXPORT_ROWS = 10_000;
+const responses = await ctx.db
+  .select()
+  .from(formResponses)
+  .where(eq(formResponses.formId, input.formId))
+  .orderBy(desc(formResponses.submittedAt))
+  .limit(MAX_EXPORT_ROWS);
+```
+
+Then update the return value. The current return at ~line 341 is `return { csv: csvLines.join("\n") }`. Change to:
+```typescript
+return { csv: csvLines.join("\n"), truncated: responses.length >= MAX_EXPORT_ROWS };
+```
+
+Also update the empty case at line 313: `return { csv: "", truncated: false };`
+
+**Test expectations (what makes the tests pass):**
+1. `form-settings.test.ts`: No `z.any()` in file, all 6 field names present, `.strict()` present + no `.passthrough()`
+2. `response-export.test.ts`: `.limit(` appears within 200 chars after `.from(formResponses)` in exportCsv block; `truncated` appears in exportCsv block
+
+**Verification:**
+```bash
+cd formforge && npx vitest run
+```
+All 9 tests should pass (4 existing + 5 new).
+
+**Acceptance criteria:**
+- [ ] `z.any()` no longer appears in `form.ts`
+- [ ] Settings schema uses `.strict()` with all 6 known fields
+- [ ] formResponses query in exportCsv has `.limit(10_000)` (or similar)
+- [ ] Export returns `truncated` boolean
+- [ ] All 9 vitest tests pass
+- [ ] TypeScript compiles: `npx tsc --noEmit` passes (or has only pre-existing errors)
 
 ### Green
 - Step 4.4: Run tests and verify all pass
