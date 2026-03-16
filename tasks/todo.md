@@ -618,17 +618,17 @@ Changes:
 
 ### Milestone: PulseBoard Notification Reliability
 **Acceptance Criteria:**
-- [ ] All three cron routes reject requests when CRON_SECRET is unset
-- [ ] Alert records track which managers were notified and which failed
-- [ ] Digest records track which managers received the email
-- [ ] Partial email failures don't block remaining sends
-- [ ] All phase tests pass
-- [ ] No regressions in previous phase tests
+- [x] All three cron routes reject requests when CRON_SECRET is unset
+- [x] Alert records track which managers were notified and which failed
+- [x] Digest records track which managers received the email
+- [x] Partial email failures don't block remaining sends
+- [x] All phase tests pass (14/14: 2 smoke + 4 N+1 + 3 cron-auth + 3 alert-tracking + 2 digest-tracking)
+- [x] No regressions in previous phase tests
 
 **On Completion:**
-- Deviations from plan:
-- Tech debt / follow-ups:
-- Ready for next phase: yes/no
+- Deviations from plan: Used `json()` from drizzle-orm/pg-core (not `jsonb`) for new tracking columns since `jsonb` was already used for other purposes and `json` is sufficient for simple arrays. Tests are static analysis (grep-based) consistent with project convention.
+- Tech debt / follow-ups: DB migration needed for new columns (notified_manager_ids, failed_manager_ids on alerts; sent_to on digests). No migration file generated — should be created with drizzle-kit before deployment.
+- Ready for next phase: yes
 
 ---
 

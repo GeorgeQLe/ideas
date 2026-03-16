@@ -94,3 +94,18 @@
 - `inArray` from drizzle-orm for batch WHERE IN clauses
 - Manual `reduce()` for groupBy (avoids `Map.groupBy` Node version concerns)
 - Alert duplicate checks still per-entity (low volume, only when thresholds exceeded)
+
+## 2026-03-16: Phase 7 — PulseBoard Hardening (CR-009, CR-014, CR-015)
+
+**What was done:**
+- CR-009: Fixed cron auth bypass in all 3 route files — changed `cronSecret &&` to `!cronSecret ||` so requests are rejected when CRON_SECRET env var is unset
+- CR-014: Added `notifiedManagerIds` and `failedManagerIds` json columns to alerts schema; modified `alert-detection.ts` to use `.returning()` for alert insert and track successful/failed email sends per manager
+- CR-015: Added `sentTo` json column to digests schema; modified `weekly-digest.ts` to collect manager IDs on successful email delivery and update digest record
+- Created 3 new test files: `cron-auth.test.ts` (3 tests), `alert-email-tracking.test.ts` (3 tests), `digest-delivery.test.ts` (2 tests)
+- All 14 pulseboard tests passing (2 smoke + 4 N+1 + 3 cron-auth + 3 alert-tracking + 2 digest-tracking)
+- Phase 7 complete
+
+**Key changes:**
+- Added `json` import to schema.ts (alongside existing `jsonb`)
+- Alert insert now uses `.returning()` to capture `alertRecord.id` for subsequent update
+- Digest already used `.returning()` — just needed `sentTo` tracking added to the email loop
