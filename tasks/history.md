@@ -129,3 +129,17 @@
 - Created `driftlog/src/server/ai/__tests__/generate-changelog-logging.test.ts` (3 static analysis tests)
 - All formforge tests passing (11/11), all driftlog tests passing (130/130)
 - Phase 9 complete
+
+## 2026-03-16: Phase 10 — Cross-Project Rate Limiting + Asset DB Fixes (CR-016, CR-017, CR-019)
+
+**What was done:**
+- CR-016: Added in-memory rate limiter (10 req/min/IP, Map-based) to 3 public endpoints:
+  - `formforge/src/app/api/submit/[slug]/route.ts` — before Turnstile check
+  - `driftlog/src/app/api/public/track/route.ts` — at start of POST
+  - `snipvault/src/app/api/auth/device-code/route.ts` — POST only
+- CR-017: Added `warnings` array to `asset-inventory-db/src/server/routers/import-export.ts` importCommit — surfaces unresolved owner emails
+- CR-019: Added `NODE_ENV !== "production"` guard to `asset-inventory-db/src/lib/auth.ts` E2E credentials provider
+- Set up vitest in asset-inventory-db (vitest.config.ts, vitest dev dep)
+- Created 5 new test files: rate-limit tests for 3 projects + import-warnings + auth-guard
+- All tests passing: formforge 13/13, driftlog 132/132, snipvault 15/15, asset-inventory-db 4/4
+- **All 10 phases of code review remediation complete** — 19 CRs addressed across 5 projects

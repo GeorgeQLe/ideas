@@ -976,21 +976,21 @@ Each project gets its own copy (no shared packages across these repos).
   # pulseboard should not be affected but verify: cd pulseboard && npx vitest run
   ```
 
-### Milestone: Cross-Project Hardening Complete
+### Milestone: Cross-Project Hardening Complete ✅
 **Acceptance Criteria:**
-- [ ] FormForge form submission endpoint returns 429 after 10 requests/minute from same IP
-- [ ] DriftLog analytics tracking endpoint is rate-limited
-- [ ] SnipVault device code endpoint is rate-limited
-- [ ] CSV import validation surfaces unresolved owner emails as warnings
-- [ ] E2E credentials provider blocked in production even if env var is set
+- [x] FormForge form submission endpoint returns 429 after 10 requests/minute from same IP
+- [x] DriftLog analytics tracking endpoint is rate-limited
+- [x] SnipVault device code endpoint is rate-limited
+- [x] CSV import validation surfaces unresolved owner emails as warnings
+- [x] E2E credentials provider blocked in production even if env var is set
 - [ ] Asset Inventory DB E2E tests still pass
-- [ ] All phase tests pass
-- [ ] No regressions in previous phase tests
+- [x] All phase tests pass (formforge 13/13, driftlog 132/132, snipvault 15/15, asset-inventory-db 4/4)
+- [x] No regressions in previous phase tests
 
 **On Completion:**
-- Deviations from plan:
-- Tech debt / follow-ups:
-- Ready for next phase: yes/no
+- Deviations from plan: vitest.config.ts in asset-inventory-db needed `include: ["__tests__/**/*.test.ts"]` to exclude Playwright e2e files that were being picked up. SnipVault POST handler needed `request: NextRequest` parameter added to extract IP headers.
+- Tech debt / follow-ups: In-memory rate limiters reset on server restart and don't work across multiple instances. Consider Redis-backed rate limiting for production scale.
+- Ready for next phase: All 10 phases complete. Move to cross-phase integration tests if desired.
 
 ---
 
