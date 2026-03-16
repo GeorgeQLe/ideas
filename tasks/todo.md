@@ -455,36 +455,75 @@ All driftlog tests (123 existing + new) and snipvault tests (4 existing + new) s
 
 ## Phase 6: PulseBoard N+1 Query Fix (CR-004)
 
+### Detailed Implementation Plan (for fresh context)
+
+**Problem:** `pulseboard/src/server/cron/alert-detection.ts` has three N+1 query patterns:
+1. `detectIndividualBurnout()` (line 51): loops `for (const user of orgUsers)` at line 64, queries check-ins per user at lines 68-77, then queries managers per user at lines 120-129
+2. `detectTeamDip()` (line 153): loops `for (const team of orgTeams)` at line 165, runs 2 aggregation queries per team (baseline + recent) at lines 167-188
+3. `detectLowParticipation()` (line 228): loops `for (const team of orgTeams)` at line 238, with nested `for (let i = 0; i < 3; i++)` loop querying participation counts at lines 255-260
+
+**DB Schema (from `pulseboard/src/server/db/schema.ts`):**
+- `check_ins`: id, userId, teamId, orgId, energy (1-5), moodTags, note, source, date, createdAt — unique on (userId, date)
+- `alerts`: id, orgId, teamId, userId, type (individual_burnout|team_dip|low_participation), severity (warning|critical), message, acknowledged, acknowledgedBy, createdAt
+- `users`: id, orgId, teamId, name, email, role
+- `teams`: id, orgId, name
+
+**Approach:** Replace per-entity queries with bulk fetches per org, then group in memory.
+
 ### Tests First
 - Step 6.1: Write tests for batched alert detection
   - File: create `pulseboard/src/server/cron/__tests__/alert-detection.test.ts`
-  - Test cases:
-    - `detectIndividualBurnout` with batched check-ins correctly identifies users with 3+ consecutive low-energy days
-    - `detectIndividualBurnout` with batched check-ins correctly identifies warning (3 days) vs critical (5 days)
-    - Batched fetch returns same results as individual per-user fetch (equivalence test)
-    - Org with 0 users produces no alerts
-    - User with no recent check-ins is not flagged
-  - Tests should FAIL initially
+  - Test approach: Static analysis (grep-based, matching project convention from Phases 2-5)
+  - Read source of `alert-detection.ts` and verify:
+    - Test 1: No per-user check-in query inside a loop — the pattern `for.*user.*\n.*select.*check_ins.*userId` should not exist. Instead, verify the file contains a single bulk fetch with `inArray` or `IN` for check-ins per org.
+    - Test 2: No per-team aggregation query inside a loop — verify `detectTeamDip` does not have `select.*avg.*energy` inside a `for` loop. Instead should batch-fetch all team check-ins.
+    - Test 3: No nested date loop in `detectLowParticipation` — verify the 3-day nested loop with individual count queries is replaced with a bulk fetch.
+    - Test 4: The file imports `inArray` from `drizzle-orm` (indicator of batch query pattern).
+  - All tests should FAIL initially (file still has N+1 loops)
 
 ### Implementation
-- Step 6.2: Refactor alert detection to use batch queries
+- Step 6.2: Refactor `detectIndividualBurnout` to batch queries
   - File: modify `pulseboard/src/server/cron/alert-detection.ts`
-  - Replace the per-user loop (~lines 64-68) with a single batched query:
-    - Fetch all check-ins for all org users in the past N days with `WHERE userId IN (...)`
-    - Group results in memory by userId using a Map
-  - Iterate over the grouped results instead of making individual queries
-  - Keep the per-manager email loop (batching emails is a separate concern)
-  - Preserve all existing alert detection logic (burnout, team dip, low participation)
+  - Add `inArray` to the drizzle-orm imports
+  - Replace the per-user loop (line 64-68) with:
+    1. Fetch ALL org user IDs: `const userIds = orgUsers.map(u => u.id)`
+    2. Single bulk query: `const allCheckIns = await db.select().from(checkIns).where(and(inArray(checkIns.userId, userIds), gte(checkIns.date, sevenDaysAgo))).orderBy(desc(checkIns.date))`
+    3. Group by userId in memory: `const checkInsByUser = new Map<string, typeof allCheckIns>()`
+    4. Loop over the Map entries to detect burnout (same logic, different data source)
+  - For manager lookups (lines 120-129): batch-fetch all managers for the org once before the loop using `inArray(users.teamId, uniqueTeamIds)` and `eq(users.role, 'manager')`, then look up from Map
+
+- Step 6.3: Refactor `detectTeamDip` to batch queries
+  - Replace per-team aggregation loop (lines 165-188) with:
+    1. Fetch ALL check-ins for all org teams for the past 30 days in one query
+    2. Group by teamId in memory
+    3. Compute baseline (30-day) and recent (7-day) averages in JS
+  - Keep alert creation logic unchanged
+
+- Step 6.4: Refactor `detectLowParticipation` to batch queries
+  - Replace per-team + nested per-day loops (lines 238-260) with:
+    1. Batch-fetch all team member counts: `SELECT teamId, COUNT(*) FROM users WHERE orgId = ? GROUP BY teamId`
+    2. Batch-fetch all check-ins for past 3 days: single query with `gte(checkIns.date, threeDaysAgo)`
+    3. Group check-ins by (teamId, date) in JS to compute daily participation counts
+  - Keep alert creation logic unchanged
 
 ### Green
-- Step 6.3: Run tests and verify all pass
-- Step 6.4: Count SQL queries before/after (log or mock) — should be O(orgs) not O(users)
+- Step 6.5: Run tests and verify all pass
+  ```bash
+  cd pulseboard && npx vitest run
+  ```
+  Expected: existing smoke tests (2) + new alert-detection tests (4) all pass
+
+**Verification:**
+- `grep -c "inArray" pulseboard/src/server/cron/alert-detection.ts` returns >= 1
+- `grep "for.*const user" pulseboard/src/server/cron/alert-detection.ts` should NOT show per-user DB queries on adjacent lines
 
 ### Milestone: Alert Detection Performance
 **Acceptance Criteria:**
-- [ ] One DB query per org for check-in data (not per-user)
+- [ ] Bulk fetch per org for check-in data (uses `inArray` or equivalent)
+- [ ] `detectIndividualBurnout` has no per-user DB queries
+- [ ] `detectTeamDip` has no per-team aggregation queries
+- [ ] `detectLowParticipation` has no nested per-day count queries
 - [ ] Alert detection produces identical results to the original N+1 implementation
-- [ ] Individual burnout, team dip, and low participation detection all still function
 - [ ] All phase tests pass
 - [ ] No regressions in previous phase tests
 
