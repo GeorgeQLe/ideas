@@ -536,6 +536,43 @@ All driftlog tests (123 existing + new) and snipvault tests (4 existing + new) s
 
 ## Phase 7: PulseBoard Hardening (CR-009, CR-014, CR-015)
 
+### Detailed Implementation Plan (for fresh context)
+
+**CR-009 — Cron auth bypass when CRON_SECRET is unset**
+
+All three cron route files have the same bug at these locations:
+- `pulseboard/src/app/api/cron/alerts/route.ts` line 16
+- `pulseboard/src/app/api/cron/digest/route.ts` line 15
+- `pulseboard/src/app/api/cron/reminders/route.ts` line 11
+
+Current (buggy):
+```typescript
+if (cronSecret && authHeader !== `Bearer ${cronSecret}`) {
+  return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+}
+```
+Fix: Change `cronSecret &&` to `!cronSecret ||` so requests are rejected when the env var is missing.
+
+**CR-014 — Alert email delivery tracking**
+
+File: `pulseboard/src/server/cron/alert-detection.ts` (lines 162-174)
+Currently, `sendAlertEmail` success/failure is only logged to console. After creating an alert (line 150), the code loops over managers and sends emails.
+
+Changes:
+1. In `pulseboard/src/server/db/schema.ts`, add `notifiedManagerIds` (json, default `[]`) and `failedManagerIds` (json, default `[]`) columns to the `alerts` table (after `acknowledgedBy`, around line 149).
+2. In `alert-detection.ts`, after the email loop, update the alert record with arrays of manager IDs that succeeded/failed.
+
+**CR-015 — Digest email delivery tracking**
+
+File: `pulseboard/src/server/cron/weekly-digest.ts` (lines 49-62)
+Currently, digest emails have a `sentAt` timestamp but no record of which managers received them.
+
+Changes:
+1. In `pulseboard/src/server/db/schema.ts`, add `sentTo` (json, default `[]`) column to the `digests` table (after `sentAt`, around line 184).
+2. In `weekly-digest.ts`, after each successful `sendDigestEmail`, collect the manager ID, then update the digest record's `sentTo` array after the loop.
+
+**Test strategy:** Static analysis tests (grep-based), consistent with Phases 2-6.
+
 ### Tests First
 - Step 7.1: Write tests for cron auth, alert email tracking, and digest delivery
   - File: create `pulseboard/src/app/api/cron/__tests__/cron-auth.test.ts`
