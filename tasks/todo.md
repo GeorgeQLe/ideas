@@ -841,16 +841,16 @@ cd driftlog && npx vitest run    # if vitest set up, or jest — check package.j
 
 ### Milestone: Silent Failures Made Visible
 **Acceptance Criteria:**
-- [ ] Missing Turnstile secret produces a console.warn with descriptive message
-- [ ] Malformed AI JSON response is logged with raw content before falling back
-- [ ] Normal operation (secrets present, valid AI JSON) produces no warnings
-- [ ] All phase tests pass
-- [ ] No regressions in previous phase tests
+- [x] Missing Turnstile secret produces a console.warn with descriptive message
+- [x] Malformed AI JSON response is logged with raw content before falling back
+- [x] Normal operation (secrets present, valid AI JSON) produces no warnings
+- [x] All phase tests pass (formforge 11/11, driftlog 130/130)
+- [x] No regressions in previous phase tests
 
 **On Completion:**
-- Deviations from plan:
-- Tech debt / follow-ups:
-- Ready for next phase: yes/no
+- Deviations from plan: Created separate test file `generate-changelog-logging.test.ts` instead of adding to existing `generate-changelog.test.ts` to avoid conflicts. Test uses `../[slug]/route.ts` relative path in formforge (adjusted from plan's `../../[slug]/route.ts`).
+- Tech debt / follow-ups: none
+- Ready for next phase: yes
 
 ---
 

@@ -119,3 +119,13 @@
 - Created `snipvault/src/lib/ai/__tests__/tagging.test.ts` (2 tests) and `snipvault/src/lib/trpc/routers/__tests__/snippet-errors.test.ts` (3 tests)
 - All 13 snipvault tests passing (8 existing + 5 new)
 - Phase 8 complete
+
+## 2026-03-16: Phase 9 — FormForge & DriftLog Hardening (CR-010, CR-011)
+
+**What was done:**
+- CR-010: Added `console.warn` in `formforge/src/app/api/submit/[slug]/route.ts` when `TURNSTILE_SECRET_KEY` is unset — bot verification skip is now logged
+- CR-011: Added `console.warn` with raw content + parse error in `driftlog/src/server/ai/generate-changelog.ts` classify catch block — AI fallback no longer silent
+- Created `formforge/src/app/api/submit/__tests__/turnstile.test.ts` (2 static analysis tests)
+- Created `driftlog/src/server/ai/__tests__/generate-changelog-logging.test.ts` (3 static analysis tests)
+- All formforge tests passing (11/11), all driftlog tests passing (130/130)
+- Phase 9 complete
