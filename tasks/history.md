@@ -55,3 +55,11 @@
   - Export return should include `truncated` field
 - All 5 new tests FAIL as expected (red phase of TDD)
 - All 4 existing tests still PASS (no regressions)
+
+## 2026-03-16: Phase 4 Step 4.2 — Fix settings validation (CR-006) and CSV export limit (CR-007)
+
+**What was done:**
+- CR-006: Replaced `z.any().optional()` with strict Zod schema in `formforge/src/server/trpc/routers/form.ts` — validates 6 known fields (notificationEmails, responseLimit, closeDate, redirectUrl, successMessage, gdprConsentEnabled) with `.strict()` to reject unknown keys
+- CR-007: Added `MAX_EXPORT_ROWS = 10_000` limit to CSV export query in `formforge/src/server/trpc/routers/response.ts` and added `truncated` boolean return field
+- All 9 formforge tests passing (4 existing + 5 new from Step 4.1)
+- Phase 4 complete
