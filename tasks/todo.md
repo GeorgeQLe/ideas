@@ -734,6 +734,81 @@ Expected: 8 existing tests + ~5 new tests = ~13 tests all passing.
 
 ## Phase 9: FormForge & DriftLog Hardening (CR-010, CR-011)
 
+### Detailed Implementation Plan (for fresh context)
+
+**Problem:** Two silent failure patterns:
+1. **CR-010:** `formforge/src/app/api/submit/[slug]/route.ts` lines 13-14 — `verifyTurnstile()` returns `true` when `TURNSTILE_SECRET_KEY` is unset, silently disabling bot protection with no log output.
+2. **CR-011:** `driftlog/src/server/ai/generate-changelog.ts` lines 302-304 — `classify()` catch block silently falls back to `{ category: "improvement" }` when AI JSON parsing fails, with no logging of the raw response.
+
+**Current state of files:**
+
+`formforge/src/app/api/submit/[slug]/route.ts` (lines 12-16):
+```typescript
+async function verifyTurnstile(token: string): Promise<boolean> {
+  const secret = process.env.TURNSTILE_SECRET_KEY;
+  if (!secret) return true; // skip if not configured
+```
+Change line 14 to add a `console.warn` before `return true`.
+
+`driftlog/src/server/ai/generate-changelog.ts` (lines 300-304):
+```typescript
+  try {
+    parsed = JSON.parse(content);
+  } catch {
+    parsed = { category: "improvement" };
+  }
+```
+Change the catch block to log the raw content and parse error before falling back.
+
+**Test strategy:** Static analysis tests (grep-based) consistent with Phases 2-8.
+
+**Test file 1: `formforge/src/app/api/submit/__tests__/turnstile.test.ts`** (create)
+- Read `formforge/src/app/api/submit/[slug]/route.ts` source via `readFileSync` + `resolve(__dirname, '../../[slug]/route.ts')`
+- Test 1: When secret is missing, a `console.warn` with "TURNSTILE" is present near the `return true` (grep for `console.warn` near `!secret`)
+- Test 2: The warn message includes "TURNSTILE_SECRET_KEY" or similar descriptive text
+
+**Test file 2: `driftlog/src/server/ai/__tests__/generate-changelog.test.ts`** (create)
+- Read `driftlog/src/server/ai/generate-changelog.ts` source
+- Test 1: The catch block near `JSON.parse` contains `console.warn` (not silent fallback)
+- Test 2: The warn message references raw content (grep for `content` inside the catch block)
+- Test 3: The fallback still returns "improvement" category
+
+**Implementation for CR-010 (`formforge/src/app/api/submit/[slug]/route.ts`):**
+- Line 14, change:
+  ```typescript
+  if (!secret) return true; // skip if not configured
+  ```
+  to:
+  ```typescript
+  if (!secret) {
+    console.warn("[Turnstile] TURNSTILE_SECRET_KEY not set — bot verification disabled");
+    return true;
+  }
+  ```
+
+**Implementation for CR-011 (`driftlog/src/server/ai/generate-changelog.ts`):**
+- Lines 302-304, change:
+  ```typescript
+  } catch {
+    parsed = { category: "improvement" };
+  }
+  ```
+  to:
+  ```typescript
+  } catch (parseError) {
+    console.warn("[AI] Failed to parse category response, defaulting to 'improvement':", { raw: content, error: parseError });
+    parsed = { category: "improvement" };
+  }
+  ```
+
+**Verification:**
+```bash
+cd formforge && npx vitest run   # existing tests + 2 new
+cd driftlog && npx vitest run    # if vitest set up, or jest — check package.json
+```
+
+**Existing test counts:** formforge has 9 tests (Phase 1-4), driftlog has 127+ tests (jest-based from Phase 5). New tests add ~5 more.
+
 ### Tests First
 - Step 9.1: Write tests for Turnstile warning and AI fallback logging
   - File: create `formforge/src/app/api/submit/__tests__/turnstile.test.ts`
