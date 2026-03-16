@@ -42,3 +42,16 @@
 **Key changes:**
 - All `.where(eq(formResponses.id, ...))` in mutations now use `.where(and(eq(formResponses.id, ...), eq(formResponses.formId, ...)))`
 - Presigned URL route now behind Clerk auth (both middleware route matcher and in-handler check)
+
+## 2026-03-16: Phase 4 Step 4.1 — Write failing tests for CR-006, CR-007
+
+**What was done:**
+- Created `formforge/src/server/trpc/routers/__tests__/form-settings.test.ts` — 3 static analysis tests for CR-006 (settings validation):
+  - `z.any()` should not appear in settings validation
+  - Known settings fields should be present in a strict schema
+  - `.strict()` should be used to reject unknown keys
+- Created `formforge/src/server/trpc/routers/__tests__/response-export.test.ts` — 2 static analysis tests for CR-007 (CSV export limits):
+  - formResponses query in exportCsv should include `.limit()`
+  - Export return should include `truncated` field
+- All 5 new tests FAIL as expected (red phase of TDD)
+- All 4 existing tests still PASS (no regressions)
