@@ -78,3 +78,19 @@
 **Key decisions:**
 - Used `onConflictDoNothing` instead of `db.transaction()` + `FOR UPDATE` because DriftLog's neon-http driver doesn't support transactions
 - p-limit v5 (not v6+) because snipvault has no `"type": "module"` in package.json
+
+## 2026-03-16: Phase 6 — PulseBoard N+1 Query Fix (CR-004)
+
+**What was done:**
+- Refactored all 3 alert detection functions in `pulseboard/src/server/cron/alert-detection.ts` to eliminate N+1 query patterns:
+  - `detectIndividualBurnout`: Bulk-fetches all check-ins for org users + all managers with `inArray`, groups in memory via `Map`
+  - `detectTeamDip`: Bulk-fetches all check-ins for org teams (30 days), computes baseline/recent averages in JS
+  - `detectLowParticipation`: Batch-fetches member counts with `GROUP BY` + all check-ins for past 3 days, groups by (teamId, date) in JS
+- Created `pulseboard/src/server/cron/__tests__/alert-detection.test.ts` with 4 static analysis tests verifying no per-entity DB queries inside loops
+- All 6 pulseboard tests passing (2 smoke + 4 alert-detection)
+- Phase 6 complete
+
+**Key patterns:**
+- `inArray` from drizzle-orm for batch WHERE IN clauses
+- Manual `reduce()` for groupBy (avoids `Map.groupBy` Node version concerns)
+- Alert duplicate checks still per-entity (low volume, only when thresholds exceeded)

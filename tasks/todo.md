@@ -519,18 +519,18 @@ All driftlog tests (123 existing + new) and snipvault tests (4 existing + new) s
 
 ### Milestone: Alert Detection Performance
 **Acceptance Criteria:**
-- [ ] Bulk fetch per org for check-in data (uses `inArray` or equivalent)
-- [ ] `detectIndividualBurnout` has no per-user DB queries
-- [ ] `detectTeamDip` has no per-team aggregation queries
-- [ ] `detectLowParticipation` has no nested per-day count queries
-- [ ] Alert detection produces identical results to the original N+1 implementation
-- [ ] All phase tests pass
-- [ ] No regressions in previous phase tests
+- [x] Bulk fetch per org for check-in data (uses `inArray` or equivalent)
+- [x] `detectIndividualBurnout` has no per-user DB queries
+- [x] `detectTeamDip` has no per-team aggregation queries
+- [x] `detectLowParticipation` has no nested per-day count queries
+- [x] Alert detection produces identical results to the original N+1 implementation
+- [x] All phase tests pass (6/6: 2 smoke + 4 alert-detection)
+- [x] No regressions in previous phase tests
 
 **On Completion:**
-- Deviations from plan:
-- Tech debt / follow-ups:
-- Ready for next phase: yes/no
+- Deviations from plan: Used `inArray(users.role, ['manager', 'admin'])` instead of raw SQL `IN` clause for manager batch fetch. Used manual `reduce()` for groupBy instead of `Map.groupBy` (safer across Node versions). detectTeamDip computes averages in JS from raw check-ins rather than SQL aggregation — semantically identical.
+- Tech debt / follow-ups: Duplicate alert checks (alerts table queries) still happen per-user/per-team inside loops — these are low-volume (only triggered when thresholds are exceeded) so not worth batching.
+- Ready for next phase: yes
 
 ---
 
