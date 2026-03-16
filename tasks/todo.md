@@ -634,6 +634,48 @@ Changes:
 
 ## Phase 8: SnipVault Reliability (CR-012, CR-013, CR-018)
 
+### Detailed Implementation Plan (for fresh context)
+
+**Problem:** Three reliability issues in SnipVault:
+1. **CR-013:** `snipvault/src/lib/ai/tagging.ts` line 129 has `return found!.id` — a non-null assertion on a potentially null DB result after `onConflictDoNothing` + re-fetch. If both insert and re-fetch fail, this crashes.
+2. **CR-018:** `snipvault/src/lib/trpc/routers/snippet.ts` uses `throw new Error('Snippet not found')` at lines 130, 246, 314 instead of `TRPCError({ code: "NOT_FOUND" })`. Generic errors don't set proper HTTP status codes.
+3. **CR-012:** Same file, lines 217-219 and 283-285 have fire-and-forget `.catch()` blocks that log errors but don't include the snippet ID, making debugging difficult.
+
+**Current state of files:**
+- `tagging.ts` line 129: `return found!.id;` — the `found` variable comes from a DB query at line 125
+- `snippet.ts`: NO `TRPCError` import exists — needs to be added from `@trpc/server`
+- `snippet.ts` lines 217-219: `.catch((err) => { console.error('[Snippet Create] Background AI tasks failed:', err); });` — already has context label but no snippet ID
+- `snippet.ts` lines 283-285: `.catch((err) => { console.error('[Snippet Update] Background AI tasks failed:', err); });` — same pattern
+
+**Test strategy:** Static analysis tests (grep-based) consistent with project convention (Phases 2-7).
+
+**Test file 1: `snipvault/src/lib/ai/__tests__/tagging.test.ts`**
+- Read `tagging.ts` source and verify:
+  - Test 1: No `!.id` non-null assertion pattern (grep for `found!` should return 0 matches)
+  - Test 2: File contains a null/undefined check before returning `found.id` (grep for `if (!found)` or `if (found == null)`)
+
+**Test file 2: `snipvault/src/lib/trpc/routers/__tests__/snippet-errors.test.ts`**
+- Read `snippet.ts` source and verify:
+  - Test 1: No `throw new Error('Snippet not found')` — should use TRPCError instead (grep for `new Error.*Snippet not found` returns 0)
+  - Test 2: File imports `TRPCError` from `@trpc/server` (grep for `TRPCError`)
+  - Test 3: Fire-and-forget catch blocks include snippet ID (grep for `snippet.id` or `${snippet.id}` in catch blocks near `Background AI`)
+
+**Implementation details for snippet.ts TRPCError:**
+- Add import: `import { TRPCError } from "@trpc/server";`
+- Replace 3 instances of `throw new Error('Snippet not found')` with `throw new TRPCError({ code: "NOT_FOUND", message: "Snippet not found" })`
+- Lines 130, 246, 314
+
+**Implementation details for snippet.ts logging (CR-012):**
+- Line 217-219: Change `console.error('[Snippet Create] Background AI tasks failed:', err)` to `console.error(\`[Snippet ${snippet.id}] Background AI tasks failed:\`, err)`
+- Line 283-285: Change `console.error('[Snippet Update] Background AI tasks failed:', err)` to `console.error(\`[Snippet ${snippet.id}] Background AI tasks failed:\`, err)`
+- Verify that `snippet` variable is in scope at these locations (it is — `snippet` is the returned insert/select result)
+
+**Verification:**
+```bash
+cd snipvault && npx vitest run
+```
+Expected: 8 existing tests + ~5 new tests = ~13 tests all passing.
+
 ### Tests First
 - Step 8.1: Write tests for AI status tracking, null safety, and TRPCError usage
   - File: create `snipvault/src/lib/ai/__tests__/tagging.test.ts`
