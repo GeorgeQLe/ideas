@@ -109,3 +109,13 @@
 - Added `json` import to schema.ts (alongside existing `jsonb`)
 - Alert insert now uses `.returning()` to capture `alertRecord.id` for subsequent update
 - Digest already used `.returning()` — just needed `sentTo` tracking added to the email loop
+
+## 2026-03-16: Phase 8 — SnipVault Reliability (CR-012, CR-013, CR-018)
+
+**What was done:**
+- CR-013: Replaced `found!.id` non-null assertion in `snipvault/src/lib/ai/tagging.ts` with proper null check + descriptive error
+- CR-018: Replaced 3 `throw new Error('Snippet not found')` with `throw new TRPCError({ code: "NOT_FOUND", ... })` in `snipvault/src/lib/trpc/routers/snippet.ts`
+- CR-012: Updated 2 fire-and-forget catch blocks to include snippet ID in log messages using template literals
+- Created `snipvault/src/lib/ai/__tests__/tagging.test.ts` (2 tests) and `snipvault/src/lib/trpc/routers/__tests__/snippet-errors.test.ts` (3 tests)
+- All 13 snipvault tests passing (8 existing + 5 new)
+- Phase 8 complete

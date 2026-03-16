@@ -716,19 +716,19 @@ Expected: 8 existing tests + ~5 new tests = ~13 tests all passing.
 ### Green
 - Step 8.5: Run all snipvault tests and verify they pass
 
-### Milestone: SnipVault Error Handling
+### Milestone: SnipVault Error Handling ✅
 **Acceptance Criteria:**
-- [ ] No `!` non-null assertions on potentially null DB results in tagging.ts
-- [ ] Race condition in tag creation throws descriptive error instead of crashing
-- [ ] All `throw new Error('Snippet not found')` replaced with `TRPCError({ code: "NOT_FOUND" })`
-- [ ] Fire-and-forget catch blocks include snippet ID in log message
-- [ ] All phase tests pass
-- [ ] No regressions in previous phase tests
+- [x] No `!` non-null assertions on potentially null DB results in tagging.ts
+- [x] Race condition in tag creation throws descriptive error instead of crashing
+- [x] All `throw new Error('Snippet not found')` replaced with `TRPCError({ code: "NOT_FOUND" })`
+- [x] Fire-and-forget catch blocks include snippet ID in log message
+- [x] All phase tests pass
+- [x] No regressions in previous phase tests
 
 **On Completion:**
-- Deviations from plan:
-- Tech debt / follow-ups:
-- Ready for next phase: yes/no
+- Deviations from plan: CR-012 update catch uses `existing.id` (not `snippet.id`) since the variable in scope is `existing`
+- Tech debt / follow-ups: none
+- Ready for next phase: yes
 
 ---
 
