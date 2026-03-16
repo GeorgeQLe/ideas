@@ -63,3 +63,18 @@
 - CR-007: Added `MAX_EXPORT_ROWS = 10_000` limit to CSV export query in `formforge/src/server/trpc/routers/response.ts` and added `truncated` boolean return field
 - All 9 formforge tests passing (4 existing + 5 new from Step 4.1)
 - Phase 4 complete
+
+## 2026-03-16: Phase 5 — DriftLog Race Condition (CR-005) + SnipVault Concurrency (CR-008)
+
+**What was done:**
+- CR-005: Replaced check-then-create race condition in `driftlog/src/server/webhooks/process-merge-event.ts` with atomic `insert().onConflictDoNothing().returning()` + re-fetch pattern in both `processSingleRepoMerge()` and `processMonorepoMerge()`
+- CR-005: Created partial unique index migration `driftlog/drizzle/0001_add_releases_draft_unique_index.sql` — `CREATE UNIQUE INDEX ON releases (org_id, repo_id) WHERE status = 'draft'`
+- CR-005: Created `driftlog/src/server/webhooks/__tests__/process-merge-event.test.ts` with 4 static analysis tests (atomic pattern + migration)
+- CR-008: Added `p-limit@5` to snipvault, wrapped `generateEmbeddingVector()` in `pLimit(5)` concurrency limiter in `snipvault/src/lib/ai/embeddings.ts`
+- CR-008: Created `snipvault/src/lib/ai/__tests__/embeddings.test.ts` with 3 tests (limiter import, instance, wrapping)
+- All tests passing: driftlog 127/127, snipvault 8/8
+- Phase 5 complete
+
+**Key decisions:**
+- Used `onConflictDoNothing` instead of `db.transaction()` + `FOR UPDATE` because DriftLog's neon-http driver doesn't support transactions
+- p-limit v5 (not v6+) because snipvault has no `"type": "module"` in package.json
