@@ -266,12 +266,13 @@ Stack: Rust/Axum, WASM, React, PostgreSQL, S3, Python FastAPI | 8 phases, 42 day
 
 ## Working Prototypes
 
-Five products have working Next.js prototypes (each in its own repo, not tracked by this repo):
+These products have graduated out of the spec repo into their own implementation repos under `../apps/`:
 
-| Directory | Product |
-|-----------|---------|
-| `asset-inventory-db/` | Asset Inventory DB |
-| `driftlog/` | DriftLog |
-| `formforge/` | FormForge |
-| `pulseboard/` | PulseBoard |
-| `snipvault/` | SnipVault |
+| Path | Product |
+|------|---------|
+| `../apps/asset-inventory-db/` | Asset Inventory DB |
+| `../apps/driftlog/` | DriftLog |
+| `../apps/formforge/` | FormForge |
+| `../apps/jit-life-os/` | JIT Life OS |
+| `../apps/pulseboard/` | PulseBoard |
+| `../apps/snipvault/` | SnipVault |
